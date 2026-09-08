@@ -250,24 +250,24 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                           {/* 頂部裝飾條 */}
                           <div className="absolute top-0 left-0 right-0 h-2 bg-sky-600"></div>
 
-                          {/* 頂部：公司標題與流水號 (字體顯著放大加大) */}
-                          <div className="space-y-1 mt-1 border-b-2 border-sky-300/80 pb-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-lg bg-sky-700 text-white font-black text-sm flex items-center justify-center shadow-sm">
+                          {/* 頂部：公司標題與流水號 (單行不折行 whitespace-nowrap，字體清晰大器) */}
+                          <div className="space-y-1.5 mt-1 border-b-2 border-sky-300/80 pb-2.5">
+                            <div className="flex items-center justify-between gap-1.5">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <div className="w-6 h-6 rounded-md bg-sky-700 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
                                   天
                                 </div>
-                                <span className="font-black text-base sm:text-lg tracking-tight text-slate-950">
+                                <span className="font-black text-[15px] sm:text-[17px] tracking-tight text-slate-950 whitespace-nowrap">
                                   天泰營造股份有限公司
                                 </span>
                               </div>
-                              <span className="font-mono font-black text-sm sm:text-base px-2.5 py-0.5 rounded-lg bg-sky-700 text-white shadow-sm shrink-0">
+                              <span className="font-mono font-black text-xs sm:text-sm px-2 py-0.5 rounded-md bg-sky-700 text-white shadow-xs shrink-0 whitespace-nowrap">
                                 證號 #{card.passNo}
                               </span>
                             </div>
                             <div className="flex items-center justify-between font-black text-sky-800 tracking-wider">
-                              <span className="text-xs sm:text-sm">工區專用車輛停車許可證</span>
-                              <span className="text-xs tracking-widest text-sky-600">PARKING PERMIT</span>
+                              <span className="text-xs sm:text-sm whitespace-nowrap">工區專用車輛停車許可證</span>
+                              <span className="text-[11px] sm:text-xs tracking-widest text-sky-600 font-mono whitespace-nowrap">PARKING PERMIT</span>
                             </div>
                           </div>
 
