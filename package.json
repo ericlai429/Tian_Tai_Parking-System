@@ -1,0 +1,29 @@
+{
+  "name": "tian-tai",
+  "private": true,
+  "version": "1.0.0",
+  "description": "天泰管理系統 - 天泰三總勤務班表與智慧停車管理系統",
+  "homepage": "https://ericlai429.github.io/Tian_Tai_Parking-System",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "exceljs": "^4.4.0",
+    "lucide-react": "^1.24.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "vite": "^8.1.1"
+  }
+}
