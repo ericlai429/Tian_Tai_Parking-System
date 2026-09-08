@@ -269,6 +269,10 @@ export default function App() {
             <div style={{ color: 'var(--text-dim)' }}>
               執勤單位：飛龍保全 / 中華飛龍物業
             </div>
+            {/* 智慧財產權聲明 (低調細字，嚴謹宣示) */}
+            <div className="text-[10px] leading-relaxed pt-1.5 px-2 text-slate-500/80 tracking-tight max-w-[360px] mx-auto select-none">
+              本程式專屬智慧財產權，嚴禁未經授權之複製、散布、修改、反編譯（Decompile）、逆向工程或商業化營利行為。
+            </div>
           </div>
 
           {/* 底部 15% 自動安全留白區塊 (約 15vh) */}
