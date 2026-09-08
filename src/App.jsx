@@ -4,10 +4,11 @@ import DashboardView from './components/DashboardView';
 import ScheduleView from './components/ScheduleView';
 import ParkingView from './components/ParkingView';
 import CloudSyncModal from './components/CloudSyncModal';
+import PassCardModal from './components/PassCardModal';
 
 import { INITIAL_SCHEDULE_DATA } from './data/initialSchedule';
 import { INITIAL_PARKING_DATA, DEFAULT_PARKING_SHEET_URL } from './data/defaultParking';
-import { Lock, Unlock, KeyRound } from 'lucide-react';
+import { Lock, Unlock, KeyRound, CreditCard } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -21,6 +22,12 @@ export default function App() {
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [adminError, setAdminError] = useState('');
 
+  // 停車証輸出彈窗與密碼保護控制
+  const [showPassCardModal, setShowPassCardModal] = useState(false);
+  const [showPassCardAuthModal, setShowPassCardAuthModal] = useState(false);
+  const [passCardPasswordInput, setPassCardPasswordInput] = useState('');
+  const [passCardError, setPassCardError] = useState('');
+
   // 勤務班表資料
   const [scheduleData, setScheduleData] = useState(() => {
     const cached = localStorage.getItem('tian_tai_schedule_data');
@@ -30,30 +37,26 @@ export default function App() {
     return INITIAL_SCHEDULE_DATA;
   });
 
-  // 停車場名冊資料 (確保 VIP 長官從 001 依序往下排序，統一 3 位數流水號，並自動補入最新車輛如 6831-MR)
+  // 停車場名冊資料 (確保 001 必為執行長/總經理 鄭全欽/謝佳蓉，統一 3 位數流水號，消除舊快取衝突)
   const [parkingList, setParkingList] = useState(() => {
     const cached = localStorage.getItem('tian_tai_parking_data');
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // 檢查是否已包含最新飛龍保全車輛 6831-MR
-          const has6831 = parsed.some(p => (p.plate || '').includes('6831'));
-          if (has6831 && parsed.length >= INITIAL_PARKING_DATA.length) {
+          // 檢查 001 或第一筆是否為 CCN-1898 鄭全欽/謝佳蓉，若舊快取順序錯誤則捨棄舊快取採用最新 INITIAL_PARKING_DATA
+          const firstItem = parsed[0] || {};
+          const isFirstCorrect = (firstItem.plate || '').toUpperCase().includes('1898') || (firstItem.name || '').includes('鄭全欽');
+          if (isFirstCorrect) {
             return parsed;
           }
-          // 若舊快取缺少新車輛，自動與 INITIAL_PARKING_DATA 合併補齊
-          const existingPlates = new Set(parsed.map(p => (p.plate || '').replace(/[\s-]/g, '').toUpperCase()));
-          const missing = INITIAL_PARKING_DATA.filter(p => !existingPlates.has((p.plate || '').replace(/[\s-]/g, '').toUpperCase()));
-          if (missing.length > 0) {
-            const merged = [...parsed, ...missing];
-            localStorage.setItem('tian_tai_parking_data', JSON.stringify(merged));
-            return merged;
-          }
-          return parsed;
         }
       } catch (e) { /* ignore */ }
     }
+    // 預設寫入最新的 INITIAL_PARKING_DATA
+    try {
+      localStorage.setItem('tian_tai_parking_data', JSON.stringify(INITIAL_PARKING_DATA));
+    } catch (e) { /* ignore */ }
     return INITIAL_PARKING_DATA;
   });
 
@@ -113,12 +116,31 @@ export default function App() {
     }
   };
 
-  // 若非 Admin 身分，禁止停留或跳轉至雲端對接分頁
-  useEffect(() => {
-    if (!isAdmin && activeTab === 'cloud') {
-      setActiveTab('dashboard');
+  // 點擊「停車証」按鈕：若已是 Admin 身分直接開啟，否則跳出密碼驗證視窗 (密碼: t1898)
+  const handlePassCardClick = () => {
+    if (isAdmin) {
+      setShowPassCardModal(true);
+    } else {
+      setPassCardPasswordInput('');
+      setPassCardError('');
+      setShowPassCardAuthModal(true);
     }
-  }, [isAdmin, activeTab]);
+  };
+
+  // 停車証密碼驗證
+  const handlePassCardAuthSubmit = (e) => {
+    e.preventDefault();
+    if (passCardPasswordInput === 't1898') {
+      setIsAdmin(true);
+      localStorage.setItem('tian_tai_admin_auth', 'true');
+      setShowPassCardAuthModal(false);
+      setShowPassCardModal(true);
+      setPassCardPasswordInput('');
+      setPassCardError('');
+    } else {
+      setPassCardError('密碼錯誤！請輸入管理者密碼');
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start transition-colors duration-300" style={{ backgroundColor: 'var(--bg)' }}>
@@ -140,6 +162,7 @@ export default function App() {
               setShowAdminModal(true);
             }
           }}
+          onOpenPassCard={handlePassCardClick}
         />
 
         {/* 主工作區塊 */}
@@ -301,6 +324,76 @@ export default function App() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* 停車証密碼驗證彈出窗 (密碼: t1898) */}
+      {showPassCardAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="w-full max-w-sm p-6 rounded-2xl border space-y-4 animate-scaleUp shadow-2xl"
+               style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-sky-500/20 text-sky-400">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold" style={{ color: 'var(--text)' }}>停車証輸出授權</h3>
+                  <p className="text-xs text-slate-400">請輸入管理者密碼以製作停車卡</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => { setShowPassCardAuthModal(false); setPassCardError(''); }}
+                className="text-slate-400 hover:text-slate-200 text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handlePassCardAuthSubmit} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  autoFocus
+                  required
+                  value={passCardPasswordInput}
+                  onChange={(e) => { setPassCardPasswordInput(e.target.value); setPassCardError(''); }}
+                  placeholder="請輸入管理者密碼 (t1898)..."
+                  className="w-full px-4 py-3 rounded-xl border text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)', color: 'var(--text)' }}
+                />
+                {passCardError && (
+                  <div className="text-xs text-rose-400 font-bold mt-1.5">{passCardError}</div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowPassCardAuthModal(false); setPassCardError(''); }}
+                  className="px-4 py-2 rounded-xl border text-xs font-semibold text-slate-400 hover:bg-slate-800/30"
+                  style={{ borderColor: 'var(--card-border)' }}
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-md transition-all active:scale-95"
+                >
+                  驗證並製作
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 停車証輸出列印 Modal */}
+      {showPassCardModal && (
+        <PassCardModal
+          isOpen={showPassCardModal}
+          onClose={() => setShowPassCardModal(false)}
+          parkingList={parkingList}
+        />
       )}
     </div>
   );

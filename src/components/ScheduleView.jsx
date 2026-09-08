@@ -219,7 +219,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
             </button>
 
             <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
-              勤務常規守則
+              常規勤務
             </span>
           </div>
         </div>

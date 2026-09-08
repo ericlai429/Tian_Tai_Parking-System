@@ -338,6 +338,31 @@ export default function DashboardView({
     }
   };
 
+  // 【不在名冊內 (備查)】：嚴格免保全 PIN 碼，直接以「未登記/外部訪客(備查)」登錄備存至本日進場時間留存清單
+  const handleDirectVisitorRecord = () => {
+    const rawInput = quickPlate.trim().toUpperCase();
+    if (!rawInput) {
+      alert('請先於搜尋框輸入車牌號碼，再點擊「不在名冊內 (備查)」！');
+      return;
+    }
+
+    const visitorVehicle = {
+      plate: rawInput,
+      name: '未在名冊(備查)',
+      unit: '外部訪客',
+      subItem: '臨時抵達',
+      passNo: '備查',
+      status: 'not_found',
+      type: 'temp'
+    };
+
+    // 直接呼叫 recordEntry，完全不經過 triggerReleaseWithPin 或 888 PIN 碼驗證
+    recordEntry(visitorVehicle);
+    setSelectedVehicle(visitorVehicle);
+    setPinSuccessToast(`已備存車輛 [${rawInput}] (未在名冊/外部訪客)，免PIN碼直接留存！`);
+    setTimeout(() => setPinSuccessToast(''), 3000);
+  };
+
   // 驗證保全 PIN 碼 (需輸入 888 才能正常存檔本日進場留存，成功後保持當班授權)
   const handleVerifyPin = (e) => {
     e.preventDefault();
@@ -433,12 +458,24 @@ export default function DashboardView({
               autoFocus
             />
           </div>
-          <button 
-            type="submit"
-            className="w-full py-3 rounded-xl font-black text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0"
-          >
-            <span>即時驗證放行</span>
-          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button 
+              type="submit"
+              className="w-full py-3 rounded-xl font-black text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0 cursor-pointer"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>紀錄 且 放行</span>
+            </button>
+            <button 
+              type="button"
+              onClick={handleDirectVisitorRecord}
+              className="w-full py-3 rounded-xl font-black text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0 cursor-pointer"
+              title="未在名冊內之車輛免保全PIN碼，直接備存登錄進本日留存清單"
+            >
+              <AlertCircle className="w-4 h-4" />
+              <span>不在名冊內 (備查)</span>
+            </button>
+          </div>
         </form>
 
         {/* 即時候選推薦標籤區 (含通行證編號 No. 與車牌) */}
@@ -543,10 +580,11 @@ export default function DashboardView({
       </div>
 
       {/* 2. 【本日進場時間留存】單位、車牌、時間(無秒) & 一鍵存圖片留存 */}
-      <div className="p-4 rounded-xl border space-y-3 shadow-md"
-           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-        <div className="flex items-center justify-between gap-2 border-b pb-2.5"
-             style={{ borderColor: 'var(--card-border)' }}>
+      <div 
+        className="p-4 rounded-2xl border space-y-3.5 transition-all shadow-lg"
+        style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+      >
+        <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b" style={{ borderColor: 'var(--card-border)' }}>
           <div className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-indigo-400" />
             <h2 className="text-base font-black tracking-tight" style={{ color: 'var(--text)' }}>
@@ -586,13 +624,13 @@ export default function DashboardView({
           </div>
         </div>
 
-        {/* 進場紀錄清單列表 (單位, 車牌, 時間無秒) */}
+        {/* 進場紀錄清單列表 (無最大高度限制，隨資料量自適應延展) */}
         {entryLogs.length === 0 ? (
           <div className="py-6 text-center text-xs text-slate-400">
-            尚無車輛進場紀錄。於上方核對通過並輸入保全 Pin 碼後，將自動記錄時間並供存檔。
+            尚無車輛進場紀錄。於上方核對通過或點擊「不在名冊內 (備查)」後，將自動記錄時間並供存檔。
           </div>
         ) : (
-          <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+          <div className="space-y-1.5 min-h-[120px] transition-all">
             {entryLogs.map((log, idx) => (
               <div
                 key={log.id}
