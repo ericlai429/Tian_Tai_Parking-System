@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Car, Search, CheckCircle2, XCircle, AlertCircle, 
   Upload, Download, Plus, Trash2, Shield, Crown, 
   Phone, User, Building, FileSpreadsheet, Sparkles, Filter,
-  Cloud, RefreshCw, ExternalLink, Lock, Unlock 
+  Cloud, RefreshCw, ExternalLink, Lock, Unlock, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { parseParkingExcel, exportParkingToExcel } from '../utils/excelHelper';
@@ -35,6 +35,58 @@ export default function ParkingView({
   });
 
   const fileInputRef = useRef(null);
+
+  // 橫向滾動與滑鼠拖曳 Ref
+  const parkingTableRef = useRef(null);
+  const isMouseDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // 滑鼠滾輪直接水平捲動 (NB 筆電滑鼠支援)
+  useEffect(() => {
+    const el = parkingTableRef.current;
+    if (!el) return;
+
+    const handleWheel = (e) => {
+      if (Math.abs(e.deltaY) > 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  // 滑鼠按住拖曳平移 (Drag-to-Scroll)
+  const handleMouseDown = (e) => {
+    if (e.button !== 0 || !parkingTableRef.current || e.target.closest('button, a, input')) return;
+    isMouseDownRef.current = true;
+    setIsDragging(true);
+    startXRef.current = e.pageX - parkingTableRef.current.offsetLeft;
+    scrollLeftRef.current = parkingTableRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isMouseDownRef.current || !parkingTableRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - parkingTableRef.current.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    parkingTableRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isMouseDownRef.current = false;
+    setIsDragging(false);
+  };
+
+  // 左右平移跳轉按鈕
+  const scrollTable = (direction) => {
+    if (!parkingTableRef.current) return;
+    const delta = direction === 'left' ? -260 : 260;
+    parkingTableRef.current.scrollBy({ left: delta, behavior: 'smooth' });
+  };
 
   // 標準化車牌號碼 (去空白與破折號)
   const normalizePlate = (str) => (str || '').replace(/[\s-]/g, '').toUpperCase();
@@ -309,40 +361,63 @@ export default function ParkingView({
       </div>
 
       {/* 車輛名冊表格 */}
-      <div className="p-6 rounded-2xl border space-y-4" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-indigo-400" />
-            <span className="text-sm font-bold" style={{ color: 'var(--text)' }}>
-              名冊清單 ({filteredList.length} / {parkingList.length})
-            </span>
+      <div className="p-3.5 sm:p-4 rounded-xl border space-y-3" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-indigo-400" />
+              <span className="text-sm font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>
+                名冊清單 ({filteredList.length} / {parkingList.length})
+              </span>
+            </div>
+
+            {/* 左右快速移動微調按鈕 */}
+            <div className="flex items-center gap-1">
+              <button 
+                type="button"
+                onClick={() => scrollTable('left')}
+                className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-300 hover:text-white transition-all shadow-sm"
+                title="向左滑動查看車牌/編號"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button 
+                type="button"
+                onClick={() => scrollTable('right')}
+                className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-300 hover:text-white transition-all shadow-sm"
+                title="向右滑動查看姓名/職稱/狀態"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
+          {/* 類別標籤篩選列 */}
           <div className="flex rounded-xl p-1 border overflow-x-auto" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--card-hover)' }}>
             <button
               onClick={() => setFilterType('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filterType === 'all' ? 'bg-indigo-600 text-white' : ''}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${filterType === 'all' ? 'bg-indigo-600 text-white' : ''}`}
               style={{ color: filterType === 'all' ? '#ffffff' : 'var(--text-muted)' }}
             >
               全部車輛
             </button>
             <button
               onClick={() => setFilterType('vip')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filterType === 'vip' ? 'bg-indigo-600 text-white' : ''}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${filterType === 'vip' ? 'bg-indigo-600 text-white' : ''}`}
               style={{ color: filterType === 'vip' ? '#ffffff' : 'var(--text-muted)' }}
             >
               👑 VIP長官
             </button>
             <button
               onClick={() => setFilterType('regular')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filterType === 'regular' ? 'bg-indigo-600 text-white' : ''}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${filterType === 'regular' ? 'bg-indigo-600 text-white' : ''}`}
               style={{ color: filterType === 'regular' ? '#ffffff' : 'var(--text-muted)' }}
             >
               常駐車輛
             </button>
             <button
               onClick={() => setFilterType('temp')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filterType === 'temp' ? 'bg-indigo-600 text-white' : ''}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${filterType === 'temp' ? 'bg-indigo-600 text-white' : ''}`}
               style={{ color: filterType === 'temp' ? '#ffffff' : 'var(--text-muted)' }}
             >
               貨車&重機械
@@ -351,12 +426,32 @@ export default function ParkingView({
         </div>
 
         {/* 表格 (依順序：編號 - 車牌 - 所屬公司 - 職稱 - 姓名) */}
-        <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--card-border)' }}>
+        <div 
+          ref={parkingTableRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          className={`overflow-x-auto rounded-xl border select-none transition-colors ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+          style={{ 
+            borderColor: 'var(--card-border)',
+            scrollbarWidth: 'thin',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehaviorX: 'contain'
+          }}
+        >
           <table className="w-full text-left border-collapse text-xs min-w-[700px]">
             <thead>
               <tr className="border-b whitespace-nowrap" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--card-hover)' }}>
-                <th className="p-3 font-bold w-12 text-center" style={{ color: 'var(--text-dim)' }}>編號</th>
-                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>車牌號碼</th>
+                {/* 凍結前兩欄：編號 (寬度 56px) 與 車牌 (寬度 104px) */}
+                <th className="p-3 font-bold w-[56px] min-w-[56px] text-center sticky left-0 z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-hover)', color: 'var(--text-dim)' }}>
+                  編號
+                </th>
+                <th className="p-3 font-bold w-[104px] min-w-[104px] sticky left-[56px] z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-hover)', color: 'var(--text)' }}>
+                  車牌號碼
+                </th>
                 <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>所屬公司</th>
                 <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>職稱</th>
                 <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>姓名</th>
@@ -370,12 +465,14 @@ export default function ParkingView({
             <tbody>
               {filteredList.map((item, idx) => (
                 <tr key={item.id} className="border-b hover:bg-slate-800/10 transition-colors whitespace-nowrap" style={{ borderColor: 'var(--card-border)' }}>
-                  <td className="p-3 text-center font-mono font-black">
+                  {/* 凍結欄 1：編號 */}
+                  <td className="p-3 text-center font-mono font-black sticky left-0 z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-bg)' }}>
                     <span className="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-xs">
                       {formatPassNo(item, idx)}
                     </span>
                   </td>
-                  <td className="p-3 font-mono font-black text-sm tracking-wider whitespace-nowrap" style={{ color: 'var(--plate-color)' }}>
+                  {/* 凍結欄 2：車牌號碼 */}
+                  <td className="p-3 font-mono font-black text-sm tracking-wider sticky left-[56px] z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--plate-color)' }}>
                     {item.plate}
                   </td>
                   <td className="p-3 font-semibold whitespace-nowrap" style={{ color: 'var(--text)' }}>
@@ -424,6 +521,18 @@ export default function ParkingView({
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* 筆電滑鼠操作提示 */}
+        <div className="flex items-center justify-between text-[11px] px-1 text-slate-400 border-t pt-2"
+             style={{ borderColor: 'var(--card-border)' }}>
+          <span className="flex items-center gap-1 text-indigo-300 font-medium">
+            <span>🖱️</span>
+            <span>NB 滑鼠滾輪／按住拖曳可查看右側資料</span>
+          </span>
+          <span className="text-[10px] text-slate-500 whitespace-nowrap">
+            ← 左右滑動查閱全表 →
+          </span>
         </div>
       </div>
 
