@@ -213,7 +213,7 @@ export default function DashboardView({
                   {selectedVehicle.status === 'pass' ? (
                     <>
                       <CheckCircle2 className="w-6 h-6" />
-                      <span>准予放行 PASS</span>
+                      <span>符合通過 OK!</span>
                     </>
                   ) : (
                     <>
