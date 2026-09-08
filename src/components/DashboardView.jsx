@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Car, Search, CheckCircle2, XCircle, 
+  Car, Search, CheckCircle2, XCircle, AlertCircle,
   ExternalLink, Lock, Unlock, ArrowRight, Sparkles, Hash,
   Camera, Download, Trash2, Clock, Building2, ShieldCheck, KeyRound
 } from 'lucide-react';
