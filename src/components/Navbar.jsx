@@ -53,28 +53,28 @@ export default function Navbar({
           </div>
 
           {/* 功能控制區：停車証製作、Admin 身分、雲端燈號與主題切換 */}
-          <div className="flex items-center space-x-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {/* 停車証製作按鈕 (需管理者授權) */}
             <button
               onClick={onOpenPassCard}
-              className="flex items-center space-x-1 text-[11px] px-2 py-1 rounded-lg border font-bold transition-all bg-sky-500/10 text-sky-400 border-sky-500/30 hover:bg-sky-500/20 active:scale-95 shadow-sm cursor-pointer"
+              className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border font-bold transition-all bg-sky-500/10 text-sky-400 border-sky-500/30 hover:bg-sky-500/20 active:scale-95 shadow-sm cursor-pointer whitespace-nowrap"
               title="輸出並製作符合規格之直式 A4 停車卡 (需管理員密碼)"
             >
-              <CreditCard className="w-3 h-3 text-sky-400" />
-              <span>停車証</span>
+              <CreditCard className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <span className="hidden xs:inline">停車証</span>
             </button>
 
             {/* 後台管理員登入切換鈕 (密碼: t1898) */}
             <button
               onClick={onAdminToggle}
-              className={`flex items-center space-x-1 text-[11px] px-2 py-1 rounded-lg border font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border font-bold transition-all cursor-pointer whitespace-nowrap ${
                 isAdmin 
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm' 
                   : 'text-slate-400 border-slate-700 hover:bg-slate-800/30'
               }`}
               title={isAdmin ? "目前已登入 Admin (點擊登出)" : "點擊輸入密碼登入後台"}
             >
-              {isAdmin ? <Crown className="w-3 h-3 text-amber-400" /> : <Lock className="w-3 h-3 text-slate-400" />}
+              {isAdmin ? <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" /> : <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
               <span>{isAdmin ? 'Admin' : '後台'}</span>
             </button>
 
@@ -82,7 +82,7 @@ export default function Navbar({
             {isAdmin && (
               <button
                 onClick={() => setActiveTab('cloud')}
-                className="flex items-center space-x-1 text-[11px] px-2 py-1 rounded-lg border transition-all"
+                className="flex items-center gap-1 text-[11px] px-1.5 py-1 rounded-lg border transition-all whitespace-nowrap"
                 style={{ 
                   borderColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.4)' : 'var(--card-border)',
                   backgroundColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
@@ -98,7 +98,7 @@ export default function Navbar({
             {/* 主題切換 */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-1.5 rounded-lg border transition-all hover:scale-105 active:scale-95"
+              className="p-1.5 rounded-lg border transition-all hover:scale-105 active:scale-95 shrink-0"
               style={{ 
                 borderColor: 'var(--card-border)', 
                 backgroundColor: 'var(--card-hover)',

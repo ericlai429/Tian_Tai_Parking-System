@@ -288,6 +288,12 @@ export default function DashboardView({
     }).slice(0, 10);
   }, [parkingList, quickPlate]);
 
+  // 當快速輸入 3~4 碼以上，若查未屬資料庫之車牌，主動顯示「未通過,待通報查核」紅色呼吸燈外框
+  const isUnmatchedQuery = useMemo(() => {
+    const q = quickPlate.trim();
+    return q.length >= 3 && candidates.length === 0 && !selectedVehicle;
+  }, [quickPlate, candidates, selectedVehicle]);
+
   // 選中或確認驗證 (若當班已輸入 888 解鎖，直接放行記錄；未解鎖時才彈出 PIN 碼確認視窗)
   const triggerReleaseWithPin = (vehicle) => {
     setSelectedVehicle(vehicle);
@@ -514,6 +520,28 @@ export default function DashboardView({
                   {item.type === 'vip' && <span className="text-[10px] text-amber-300">👑VIP</span>}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* 當輸入 3~4 碼以上查無此車牌：主動顯示「未通過,待通報查核」紅色呼吸燈外框卡片 */}
+        {isUnmatchedQuery && (
+          <div className="p-4 rounded-xl border-2 border-rose-500 bg-rose-500/15 glow-rose text-rose-200 animate-fadeIn space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 font-bold text-sm text-rose-300">
+                <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 animate-pulse" />
+                <span>查無名冊資料：<span className="underline decoration-rose-400 font-black">未通過，待通報查核</span></span>
+              </div>
+              <button
+                type="button"
+                onClick={handleDirectVisitorRecord}
+                className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shrink-0 shadow transition-all active:scale-95"
+              >
+                一鍵備查
+              </button>
+            </div>
+            <div className="text-xs text-rose-300/80 leading-relaxed font-mono">
+              輸入「{quickPlate}」未符合任何在冊車輛。請指示靠邊暫停，並通報工區幹部或點擊一鍵備查記錄。
             </div>
           </div>
         )}
@@ -770,7 +798,7 @@ export default function DashboardView({
                       setPinInput(e.target.value);
                       if (pinError) setPinError('');
                     }}
-                    placeholder="輸入保全 PIN 碼 (888)"
+                    placeholder="輸入保全 PIN 碼"
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl border text-center font-mono font-black text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)', color: 'var(--text)' }}
                     autoFocus

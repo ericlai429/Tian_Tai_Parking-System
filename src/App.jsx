@@ -97,7 +97,7 @@ export default function App() {
   // 驗證管理員密碼
   const handleAdminLogin = (e) => {
     e.preventDefault();
-    if (adminPasswordInput === 't1898') {
+    if ((adminPasswordInput || '').trim().toLowerCase() === 't1898') {
       setIsAdmin(true);
       localStorage.setItem('tian_tai_admin_auth', 'true');
       setShowAdminModal(false);
@@ -130,7 +130,7 @@ export default function App() {
   // 停車証密碼驗證
   const handlePassCardAuthSubmit = (e) => {
     e.preventDefault();
-    if (passCardPasswordInput === 't1898') {
+    if ((passCardPasswordInput || '').trim().toLowerCase() === 't1898') {
       setIsAdmin(true);
       localStorage.setItem('tian_tai_admin_auth', 'true');
       setShowPassCardAuthModal(false);
@@ -138,7 +138,7 @@ export default function App() {
       setPassCardPasswordInput('');
       setPassCardError('');
     } else {
-      setPassCardError('密碼錯誤！請輸入管理者密碼');
+      setPassCardError('管理員密碼錯誤！請重新輸入');
     }
   };
 
@@ -352,12 +352,12 @@ export default function App() {
             <form onSubmit={handlePassCardAuthSubmit} className="space-y-4">
               <div>
                 <input
-                  type="password"
+                  type="text"
                   autoFocus
                   required
                   value={passCardPasswordInput}
                   onChange={(e) => { setPassCardPasswordInput(e.target.value); setPassCardError(''); }}
-                  placeholder="請輸入管理者密碼 (t1898)..."
+                  placeholder="請輸入管理者密碼..."
                   className="w-full px-4 py-3 rounded-xl border text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-sky-500"
                   style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)', color: 'var(--text)' }}
                 />
