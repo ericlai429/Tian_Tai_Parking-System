@@ -247,9 +247,6 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                           className="relative flex items-center justify-center p-3 border-2 border-dashed border-slate-300 rounded-md bg-slate-50/50"
                           style={{ minHeight: '450px' }}
                         >
-                          {/* 內圈輔助虛線框 (引導精準裁切/護背邊界，微R角 rounded-sm) */}
-                          <div className="absolute inset-1.5 border border-dashed border-slate-400/80 rounded-sm pointer-events-none z-10"></div>
-
                           {/* 上方橫式留白提示 */}
                           <div className="absolute top-1 left-0 right-0 flex items-center justify-center pointer-events-none z-20">
                             <span className="text-[10px] font-mono font-bold tracking-widest text-slate-500 bg-white/95 px-2 py-0.5 rounded-sm border border-slate-300 shadow-xs">
@@ -284,185 +281,186 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                             </span>
                           </div>
 
-                          {/* 核心實體停車証卡片：微R角 rounded-md，不走過大圓角，工整俐落 */}
-                          
-                          {/* ========================================================= */}
-                          {/* 版本 1：工程大字經典版 (classic) - 經典天藍、平衡佈局 */}
-                          {/* ========================================================= */}
-                          {cardStyle === 'classic' && (
-                            <div className="pass-card w-[86%] rounded-md flex flex-col justify-between p-3.5 relative shadow-md overflow-hidden bg-white text-slate-900 border-2 border-sky-500 z-10" style={{ minHeight: '380px' }}>
-                              <div className="absolute top-0 left-0 right-0 h-2 bg-sky-600"></div>
-                              <div className="space-y-1 mt-0.5 border-b-2 border-sky-300/80 pb-2">
-                                <div className="flex items-center justify-between gap-1">
-                                  <div className="flex items-center gap-1.5 min-w-0">
-                                    <div className="w-5 h-5 rounded-sm bg-sky-700 text-white font-black text-[11px] flex items-center justify-center shadow-xs shrink-0">天</div>
-                                    <span className="font-black text-[14px] tracking-tight text-slate-950 whitespace-nowrap">天泰營造股份有限公司</span>
+                          {/* 緊貼停車卡的加粗內圈輔助虛線框 (距離卡片僅約 5~7px，加粗 2px 虛線) */}
+                          <div className="relative p-1.5 border-2 border-dashed border-slate-600 rounded-md z-10 flex items-center justify-center w-[88%] bg-transparent">
+                            {/* ========================================================= */}
+                            {/* 版本 1：工程大字經典版 (classic) - 經典天藍、平衡佈局 */}
+                            {/* ========================================================= */}
+                            {cardStyle === 'classic' && (
+                              <div className="pass-card w-full rounded-md flex flex-col justify-between p-3.5 relative shadow-md overflow-hidden bg-white text-slate-900 border-2 border-sky-500 z-10" style={{ minHeight: '380px' }}>
+                                <div className="absolute top-0 left-0 right-0 h-2 bg-sky-600"></div>
+                                <div className="space-y-1 mt-0.5 border-b-2 border-sky-300/80 pb-2">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <div className="w-5 h-5 rounded-sm bg-sky-700 text-white font-black text-[11px] flex items-center justify-center shadow-xs shrink-0">天</div>
+                                      <span className="font-black text-[14px] tracking-tight text-slate-950 whitespace-nowrap">天泰營造股份有限公司</span>
+                                    </div>
+                                    <span className="font-mono font-black text-xs px-2 py-0.5 rounded-sm bg-sky-700 text-white shadow-xs shrink-0 whitespace-nowrap">證號 #{card.passNo}</span>
                                   </div>
-                                  <span className="font-mono font-black text-xs px-2 py-0.5 rounded-sm bg-sky-700 text-white shadow-xs shrink-0 whitespace-nowrap">證號 #{card.passNo}</span>
-                                </div>
-                                <div className="flex items-center justify-between font-black text-sky-800 tracking-wider">
-                                  <span className="text-[11px] whitespace-nowrap">工區專用車輛停車許可證</span>
-                                  <span className="text-[10px] tracking-widest text-sky-600 font-mono whitespace-nowrap">PARKING PERMIT</span>
-                                </div>
-                              </div>
-                              <div className="my-auto py-1.5 text-center space-y-2">
-                                <div className="text-[11px] font-black text-sky-900 tracking-wider">核准通行車牌號碼</div>
-                                <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest px-3 py-1.5 rounded-md border-2 border-sky-500 bg-sky-50/50 text-slate-950 shadow-sm inline-block w-[92%] whitespace-nowrap">
-                                  {card.plate}
-                                </div>
-                                <div className="flex flex-col items-center justify-center gap-1 pt-0.5">
-                                  <span className="px-3 py-0.5 rounded-sm bg-sky-100 border border-sky-300 text-sky-950 font-black text-xs sm:text-sm tracking-wide shadow-xs">
-                                    {card.unit}
-                                  </span>
-                                  <div className="flex items-center justify-center gap-1.5 text-sm sm:text-base font-black text-slate-900">
-                                    <span>{card.name}</span>
-                                    <span className="text-slate-600 font-bold text-xs sm:text-sm">({card.subItem})</span>
+                                  <div className="flex items-center justify-between font-black text-sky-800 tracking-wider">
+                                    <span className="text-[11px] whitespace-nowrap">工區專用車輛停車許可證</span>
+                                    <span className="text-[10px] tracking-widest text-sky-600 font-mono whitespace-nowrap">PARKING PERMIT</span>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="space-y-1.5 border-t-2 border-sky-300/80 pt-2 mt-auto">
-                                <div className="flex items-center justify-between text-xs font-black text-slate-800">
-                                  <span>聯絡手機號碼：</span>
-                                  <span className="text-[10px] text-slate-500 font-normal">（必填，臨時移車用）</span>
-                                </div>
-                                <div className="w-full h-7 border-b-2 border-dashed border-slate-500 flex items-center justify-center text-xs text-slate-300 font-mono tracking-widest">&nbsp;</div>
-                                <div className="text-[9.5px] text-slate-600 leading-tight space-y-0.5 pt-0.5 font-medium">
-                                  <div>1. 請置放於擋風玻璃前明顯處以備警衛查驗。</div>
-                                  <div>2. 工區內請減速慢行 (限速 15km/h)，遵從引導。</div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* ========================================================= */}
-                          {/* 版本 2：深藍頂標徽章版 (boldBadge) - 深藍滿版大頂標、金色徽章 */}
-                          {/* ========================================================= */}
-                          {cardStyle === 'boldBadge' && (
-                            <div className="pass-card w-[86%] rounded-md flex flex-col justify-between relative shadow-md overflow-hidden bg-white text-slate-900 border-3 border-indigo-900 z-10" style={{ minHeight: '380px' }}>
-                              {/* 滿版深藍頂標 */}
-                              <div className="bg-indigo-950 text-white p-3 space-y-1">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="w-6 h-6 rounded-full bg-amber-400 text-indigo-950 font-black text-xs flex items-center justify-center shadow-md">天</span>
-                                    <span className="font-black text-[15px] tracking-wide whitespace-nowrap">天泰營造股份有限公司</span>
-                                  </div>
-                                  <span className="font-mono font-black text-xs px-2.5 py-0.5 rounded-full bg-amber-400 text-indigo-950 shadow-md whitespace-nowrap">
-                                    NO. {card.passNo}
-                                  </span>
-                                </div>
-                                <div className="text-center font-bold text-[11px] text-indigo-200 tracking-widest border-t border-indigo-800 pt-1">
-                                  ★ 工區專用通行證 (PARKING PASS) ★
-                                </div>
-                              </div>
-                              {/* 中間大徽章區 */}
-                              <div className="p-3 my-auto text-center space-y-2.5">
-                                <div className="inline-block px-4 py-1.5 rounded-sm bg-indigo-50 border-2 border-indigo-200 text-indigo-950 font-black text-sm whitespace-nowrap">
-                                  {card.unit}
-                                </div>
-                                <div>
-                                  <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest text-indigo-950 bg-slate-100 py-2 px-2 rounded-md border-2 border-dashed border-indigo-300 whitespace-nowrap inline-block max-w-full">
+                                <div className="my-auto py-1.5 text-center space-y-2">
+                                  <div className="text-[11px] font-black text-sky-900 tracking-wider">核准通行車牌號碼</div>
+                                  <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest px-3 py-1.5 rounded-md border-2 border-sky-500 bg-sky-50/50 text-slate-950 shadow-sm inline-block w-[92%] whitespace-nowrap">
                                     {card.plate}
                                   </div>
-                                </div>
-                                <div className="text-base font-black text-slate-900 whitespace-nowrap">
-                                  {card.name} <span className="text-indigo-700 text-sm">【{card.subItem}】</span>
-                                </div>
-                              </div>
-                              {/* 底部電話填寫 */}
-                              <div className="p-3 bg-indigo-50/50 border-t-2 border-indigo-200 space-y-1.5 mt-auto">
-                                <div className="flex items-center justify-between text-xs font-bold text-indigo-950">
-                                  <span>駕駛聯絡手機：</span>
-                                  <span className="text-[10px] text-indigo-600">（必填欄位）</span>
-                                </div>
-                                <div className="w-full h-7 border-b-2 border-indigo-400 bg-white rounded-sm flex items-center justify-center font-mono text-xs text-slate-400">&nbsp;</div>
-                                <div className="text-[9px] text-slate-500 text-center font-medium">天泰營造工地安全衛生組製發 · 限工區指定車位停放</div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* ========================================================= */}
-                          {/* 版本 3：滿版高對比工程版 (modernGrid) - 醒目警示黑黃高對比 */}
-                          {/* ========================================================= */}
-                          {cardStyle === 'modernGrid' && (
-                            <div className="pass-card w-[86%] rounded-md flex flex-col justify-between relative shadow-md overflow-hidden bg-white text-slate-900 border-4 border-slate-900 z-10" style={{ minHeight: '380px' }}>
-                              {/* 工程斑馬警示頂部 */}
-                              <div className="h-3 w-full bg-repeating-linear-gradient" style={{
-                                backgroundImage: 'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 10px, #0f172a 10px, #0f172a 20px)'
-                              }}></div>
-                              <div className="p-3 space-y-2">
-                                <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2">
-                                  <div>
-                                    <div className="font-black text-xs text-amber-600 uppercase tracking-wider">TIAN TAI CONSTRUCTION</div>
-                                    <div className="font-black text-[15px] text-slate-950 whitespace-nowrap">天泰營造股份有限公司</div>
+                                  <div className="flex flex-col items-center justify-center gap-1 pt-0.5">
+                                    <span className="px-3 py-0.5 rounded-sm bg-sky-100 border border-sky-300 text-sky-950 font-black text-xs sm:text-sm tracking-wide shadow-xs">
+                                      {card.unit}
+                                    </span>
+                                    <div className="flex items-center justify-center gap-1.5 text-sm sm:text-base font-black text-slate-900">
+                                      <span>{card.name}</span>
+                                      <span className="text-slate-600 font-bold text-xs sm:text-sm">({card.subItem})</span>
+                                    </div>
                                   </div>
-                                  <div className="text-right">
-                                    <span className="bg-slate-900 text-amber-400 font-mono font-black text-sm px-2.5 py-1 rounded-sm whitespace-nowrap">
-                                      #{card.passNo}
+                                </div>
+                                <div className="space-y-1.5 border-t-2 border-sky-300/80 pt-2 mt-auto">
+                                  <div className="flex items-center justify-between text-xs font-black text-slate-800">
+                                    <span>聯絡手機號碼：</span>
+                                    <span className="text-[10px] text-slate-500 font-normal">（必填，臨時移車用）</span>
+                                  </div>
+                                  <div className="w-full h-7 border-b-2 border-dashed border-slate-500 flex items-center justify-center text-xs text-slate-300 font-mono tracking-widest">&nbsp;</div>
+                                  <div className="text-[9.5px] text-slate-600 leading-tight space-y-0.5 pt-0.5 font-medium">
+                                    <div>1. 請置放於擋風玻璃前明顯處以備警衛查驗。</div>
+                                    <div>2. 工區內請減速慢行 (限速 15km/h)，遵從引導。</div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* ========================================================= */}
+                            {/* 版本 2：深藍頂標徽章版 (boldBadge) - 深藍滿版大頂標、金色徽章 */}
+                            {/* ========================================================= */}
+                            {cardStyle === 'boldBadge' && (
+                              <div className="pass-card w-full rounded-md flex flex-col justify-between relative shadow-md overflow-hidden bg-white text-slate-900 border-3 border-indigo-900 z-10" style={{ minHeight: '380px' }}>
+                                {/* 滿版深藍頂標 */}
+                                <div className="bg-indigo-950 text-white p-3 space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="w-6 h-6 rounded-full bg-amber-400 text-indigo-950 font-black text-xs flex items-center justify-center shadow-md">天</span>
+                                      <span className="font-black text-[15px] tracking-wide whitespace-nowrap">天泰營造股份有限公司</span>
+                                    </div>
+                                    <span className="font-mono font-black text-xs px-2.5 py-0.5 rounded-full bg-amber-400 text-indigo-950 shadow-md whitespace-nowrap">
+                                      NO. {card.passNo}
                                     </span>
                                   </div>
-                                </div>
-                                <div className="text-center font-black text-xs bg-slate-100 py-1 rounded-sm border border-slate-300 whitespace-nowrap">
-                                  三軍總醫院新建工程 · 車輛准入許可證
-                                </div>
-                              </div>
-                              {/* 核心黑框大車號 */}
-                              <div className="px-3 my-auto text-center space-y-2">
-                                <div className="bg-slate-950 text-amber-400 font-mono font-black text-2xl sm:text-3xl py-2 px-2 rounded-md tracking-widest shadow-inner whitespace-nowrap inline-block max-w-full">
-                                  {card.plate}
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 text-left pt-1">
-                                  <div className="bg-slate-100 p-2 rounded-sm border border-slate-200">
-                                    <div className="text-[10px] font-bold text-slate-500">所屬廠商/單位</div>
-                                    <div className="font-black text-xs text-slate-900 truncate">{card.unit}</div>
-                                  </div>
-                                  <div className="bg-slate-100 p-2 rounded-sm border border-slate-200">
-                                    <div className="text-[10px] font-bold text-slate-500">人員 / 職稱</div>
-                                    <div className="font-black text-xs text-slate-900 truncate">{card.name} ({card.subItem})</div>
+                                  <div className="text-center font-bold text-[11px] text-indigo-200 tracking-widest border-t border-indigo-800 pt-1">
+                                    ★ 工區專用通行證 (PARKING PASS) ★
                                   </div>
                                 </div>
-                              </div>
-                              {/* 底部手機欄位 */}
-                              <div className="p-3 bg-amber-500/10 border-t-2 border-slate-900 space-y-1 mt-auto">
-                                <div className="flex items-center justify-between text-xs font-black text-slate-900">
-                                  <span>緊急移車手機號碼：</span>
-                                  <span className="text-[10px] text-amber-700 font-bold">請以油性筆工整填寫</span>
+                                {/* 中間大徽章區 */}
+                                <div className="p-3 my-auto text-center space-y-2.5">
+                                  <div className="inline-block px-4 py-1.5 rounded-sm bg-indigo-50 border-2 border-indigo-200 text-indigo-950 font-black text-sm whitespace-nowrap">
+                                    {card.unit}
+                                  </div>
+                                  <div>
+                                    <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest text-indigo-950 bg-slate-100 py-2 px-2 rounded-md border-2 border-dashed border-indigo-300 whitespace-nowrap inline-block max-w-full">
+                                      {card.plate}
+                                    </div>
+                                  </div>
+                                  <div className="text-base font-black text-slate-900 whitespace-nowrap">
+                                    {card.name} <span className="text-indigo-700 text-sm">【{card.subItem}】</span>
+                                  </div>
                                 </div>
-                                <div className="w-full h-7 border-2 border-dashed border-slate-600 bg-white rounded-sm flex items-center justify-center font-mono text-xs">&nbsp;</div>
+                                {/* 底部電話填寫 */}
+                                <div className="p-3 bg-indigo-50/50 border-t-2 border-indigo-200 space-y-1.5 mt-auto">
+                                  <div className="flex items-center justify-between text-xs font-bold text-indigo-950">
+                                    <span>駕駛聯絡手機：</span>
+                                    <span className="text-[10px] text-indigo-600">（必填欄位）</span>
+                                  </div>
+                                  <div className="w-full h-7 border-b-2 border-indigo-400 bg-white rounded-sm flex items-center justify-center font-mono text-xs text-slate-400">&nbsp;</div>
+                                  <div className="text-[9px] text-slate-500 text-center font-medium">天泰營造工地安全衛生組製發 · 限工區指定車位停放</div>
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
 
-                          {/* ========================================================= */}
-                          {/* 版本 4：極致大字填滿版 (compactMax) - 車牌超巨大、醒目字體 */}
-                          {/* ========================================================= */}
-                          {cardStyle === 'compactMax' && (
-                            <div className="pass-card w-[86%] rounded-md flex flex-col justify-between p-3 relative shadow-md overflow-hidden bg-white text-slate-900 border-3 border-emerald-600 z-10" style={{ minHeight: '380px' }}>
-                              <div className="absolute top-0 left-0 right-0 h-2 bg-emerald-600"></div>
-                              <div className="flex items-center justify-between border-b-2 border-emerald-500 pb-1.5 mt-0.5">
-                                <span className="font-black text-base text-emerald-950 whitespace-nowrap">天泰營造</span>
-                                <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-sm whitespace-nowrap">工區停車証</span>
-                                <span className="font-mono font-black text-base text-emerald-800 whitespace-nowrap">#{card.passNo}</span>
+                            {/* ========================================================= */}
+                            {/* 版本 3：滿版高對比工程版 (modernGrid) - 醒目警示黑黃高對比 */}
+                            {/* ========================================================= */}
+                            {cardStyle === 'modernGrid' && (
+                              <div className="pass-card w-full rounded-md flex flex-col justify-between relative shadow-md overflow-hidden bg-white text-slate-900 border-4 border-slate-900 z-10" style={{ minHeight: '380px' }}>
+                                {/* 工程斑馬警示頂部 */}
+                                <div className="h-3 w-full bg-repeating-linear-gradient" style={{
+                                  backgroundImage: 'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 10px, #0f172a 10px, #0f172a 20px)'
+                                }}></div>
+                                <div className="p-3 space-y-2">
+                                  <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2">
+                                    <div>
+                                      <div className="font-black text-xs text-amber-600 uppercase tracking-wider">TIAN TAI CONSTRUCTION</div>
+                                      <div className="font-black text-[15px] text-slate-950 whitespace-nowrap">天泰營造股份有限公司</div>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className="bg-slate-900 text-amber-400 font-mono font-black text-sm px-2.5 py-1 rounded-sm whitespace-nowrap">
+                                        #{card.passNo}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-center font-black text-xs bg-slate-100 py-1 rounded-sm border border-slate-300 whitespace-nowrap">
+                                    三軍總醫院新建工程 · 車輛准入許可證
+                                  </div>
+                                </div>
+                                {/* 核心黑框大車號 */}
+                                <div className="px-3 my-auto text-center space-y-2">
+                                  <div className="bg-slate-950 text-amber-400 font-mono font-black text-2xl sm:text-3xl py-2 px-2 rounded-md tracking-widest shadow-inner whitespace-nowrap inline-block max-w-full">
+                                    {card.plate}
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2 text-left pt-1">
+                                    <div className="bg-slate-100 p-2 rounded-sm border border-slate-200">
+                                      <div className="text-[10px] font-bold text-slate-500">所屬廠商/單位</div>
+                                      <div className="font-black text-xs text-slate-900 truncate">{card.unit}</div>
+                                    </div>
+                                    <div className="bg-slate-100 p-2 rounded-sm border border-slate-200">
+                                      <div className="text-[10px] font-bold text-slate-500">人員 / 職稱</div>
+                                      <div className="font-black text-xs text-slate-900 truncate">{card.name} ({card.subItem})</div>
+                                    </div>
+                                  </div>
+                                </div>
+                                {/* 底部手機欄位 */}
+                                <div className="p-3 bg-amber-500/10 border-t-2 border-slate-900 space-y-1 mt-auto">
+                                  <div className="flex items-center justify-between text-xs font-black text-slate-900">
+                                    <span>緊急移車手機號碼：</span>
+                                    <span className="text-[10px] text-amber-700 font-bold">請以油性筆工整填寫</span>
+                                  </div>
+                                  <div className="w-full h-7 border-2 border-dashed border-slate-600 bg-white rounded-sm flex items-center justify-center font-mono text-xs">&nbsp;</div>
+                                </div>
                               </div>
-                              {/* 超特大車牌號碼 (強制 whitespace-nowrap 絕對不折行) */}
-                              <div className="my-auto py-2 text-center space-y-2">
-                                <div className="text-[11px] font-bold text-slate-500 tracking-wider whitespace-nowrap">PERMITTED VEHICLE</div>
-                                <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest text-emerald-950 bg-emerald-50 py-2.5 px-2 rounded-md border-3 border-emerald-600 shadow-md whitespace-nowrap inline-block max-w-full">
-                                  {card.plate}
+                            )}
+
+                            {/* ========================================================= */}
+                            {/* 版本 4：極致大字填滿版 (compactMax) - 車牌超巨大、醒目字體 */}
+                            {/* ========================================================= */}
+                            {cardStyle === 'compactMax' && (
+                              <div className="pass-card w-full rounded-md flex flex-col justify-between p-3 relative shadow-md overflow-hidden bg-white text-slate-900 border-3 border-emerald-600 z-10" style={{ minHeight: '380px' }}>
+                                <div className="absolute top-0 left-0 right-0 h-2 bg-emerald-600"></div>
+                                <div className="flex items-center justify-between border-b-2 border-emerald-500 pb-1.5 mt-0.5">
+                                  <span className="font-black text-base text-emerald-950 whitespace-nowrap">天泰營造</span>
+                                  <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-sm whitespace-nowrap">工區停車証</span>
+                                  <span className="font-mono font-black text-base text-emerald-800 whitespace-nowrap">#{card.passNo}</span>
                                 </div>
-                                <div className="text-base sm:text-lg font-black text-slate-900 pt-1 whitespace-nowrap">
-                                  {card.unit} · {card.name} <span className="text-sm font-bold text-emerald-700">({card.subItem})</span>
+                                {/* 超特大車牌號碼 (強制 whitespace-nowrap 絕對不折行) */}
+                                <div className="my-auto py-2 text-center space-y-2">
+                                  <div className="text-[11px] font-bold text-slate-500 tracking-wider whitespace-nowrap">PERMITTED VEHICLE</div>
+                                  <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest text-emerald-950 bg-emerald-50 py-2.5 px-2 rounded-md border-3 border-emerald-600 shadow-md whitespace-nowrap inline-block max-w-full">
+                                    {card.plate}
+                                  </div>
+                                  <div className="text-base sm:text-lg font-black text-slate-900 pt-1 whitespace-nowrap">
+                                    {card.unit} · {card.name} <span className="text-sm font-bold text-emerald-700">({card.subItem})</span>
+                                  </div>
                                 </div>
-                              </div>
-                              {/* 底部大字手機欄 */}
-                              <div className="border-t-2 border-emerald-500 pt-2 space-y-1 mt-auto">
-                                <div className="flex items-center justify-between text-xs font-black text-emerald-950">
-                                  <span>移車手機：</span>
-                                  <span className="text-[10px] text-slate-500">未留電話者禁止停放</span>
-                                </div>
-                                <div className="w-full h-8 border-2 border-emerald-300 rounded-sm bg-emerald-50/50 flex items-center justify-center font-mono text-xs">&nbsp;</div>
+                                {/* 底部大字手機欄 */}
+                                <div className="border-t-2 border-emerald-500 pt-2 space-y-1 mt-auto">
+                                  <div className="flex items-center justify-between text-xs font-black text-emerald-950">
+                                    <span>移車手機：</span>
+                                    <span className="text-[10px] text-slate-500">未留電話者禁止停放</span>
+                                  </div>
+                                  <div className="w-full h-8 border-2 border-emerald-300 rounded-sm bg-emerald-50/50 flex items-center justify-center font-mono text-xs">&nbsp;</div>
                               </div>
                             </div>
                           )}
+                          </div>
                         </div>
                       ))}
 
