@@ -37,9 +37,11 @@ export default function App() {
       try {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // 檢查或補齊 3 位數 passNo 與 VIP 排序
-          const needsFix = parsed.some(p => !p.passNo || p.passNo.length < 3);
-          if (!needsFix) return parsed;
+          // 若快取少於預設名冊筆數 (例如新增了保全車輛) 或缺少欄位，以包含新車的清單為主
+          if (parsed.length >= INITIAL_PARKING_DATA.length) {
+            const needsFix = parsed.some(p => !p.passNo || p.passNo.length < 3);
+            if (!needsFix) return parsed;
+          }
         }
       } catch (e) { /* ignore */ }
     }

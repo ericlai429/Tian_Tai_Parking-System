@@ -1,4 +1,4 @@
-﻿import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 
 /**
  * 將 Google Sheets 試算表分享網址轉化為直接可抓取之 CSV 串流網址
@@ -91,10 +91,11 @@ export async function fetchCloudParkingData(url) {
 
     vehicles.push({
       id: `p_cloud_${r}_${Date.now()}`,
+      passNo: String(vehicles.length + 1).padStart(3, '0'),
       plate: rawPlate,
       name: name || (isTruck ? '工程貨車' : '公務車輛'),
       unit,
-      subItem: title || (isTruck ? '施工運補' : '公務'),
+      subItem: title || (isTruck ? '貨車&重機械' : '公務'),
       phone,
       notes: notes || `${unit} ${title}`,
       type: isVip ? 'vip' : (isTruck ? 'temp' : 'regular'),

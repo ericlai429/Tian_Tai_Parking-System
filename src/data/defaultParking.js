@@ -24,7 +24,7 @@ export const INITIAL_PARKING_DATA = [
     passNo: "002",
     plate: "BTA-1150",
     name: "萬有為",
-    unit: "萬有為建築事務所",
+    unit: "建築事務所",
     subItem: "建築師",
     phone: "",
     notes: "",
@@ -187,10 +187,41 @@ export const INITIAL_PARKING_DATA = [
     admin3: ""
   },
 
+  {
+    id: "p_17",
+    passNo: "013",
+    plate: "6831-MR",
+    name: "賴宗興",
+    unit: "飛龍保全",
+    subItem: "保全",
+    phone: "",
+    notes: "常駐保全人員車輛",
+    type: "regular",
+    status: "pass",
+    admin1: "OK",
+    admin2: "",
+    admin3: ""
+  },
+  {
+    id: "p_18",
+    passNo: "014",
+    plate: "BHN-8875",
+    name: "賴鯤仲",
+    unit: "飛龍保全",
+    subItem: "保全",
+    phone: "",
+    notes: "常駐保全人員車輛",
+    type: "regular",
+    status: "pass",
+    admin1: "OK",
+    admin2: "",
+    admin3: ""
+  },
+
   // === 貨車&重機械 ===
   {
     id: "p_14",
-    passNo: "013",
+    passNo: "015",
     plate: "CCF-3089",
     name: "永瀚貨車 (1)",
     unit: "永瀚機電",
@@ -205,7 +236,7 @@ export const INITIAL_PARKING_DATA = [
   },
   {
     id: "p_15",
-    passNo: "014",
+    passNo: "016",
     plate: "0159-A6",
     name: "永瀚貨車 (2)",
     unit: "永瀚機電",
