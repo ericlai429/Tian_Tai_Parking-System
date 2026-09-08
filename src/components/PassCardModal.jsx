@@ -254,8 +254,9 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                               <span>聯絡手機號碼：</span>
                               <span className="text-[10px] text-slate-400 font-normal">（必填，臨時移車聯絡用）</span>
                             </div>
-                            <div className="w-full h-8 border-b-2 border-dashed border-slate-400 flex items-center justify-center text-xs text-slate-400 font-mono">
-                              09___ - ______
+                            {/* 手寫底線空白欄位 (無預填，整條留白供自由書寫) */}
+                            <div className="w-full h-8 border-b-2 border-dashed border-slate-400 flex items-center justify-center text-xs text-slate-300 font-mono tracking-widest">
+                              &nbsp;
                             </div>
 
                             <div className="text-[9px] text-slate-500 leading-tight space-y-0.5 pt-1">
@@ -268,7 +269,7 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
 
                       {pageCards.length < 4 && Array.from({ length: 4 - pageCards.length }).map((_, emptyIdx) => (
                         <div 
-                          key={empty_}
+                          key={`empty_${emptyIdx}`}
                           className="border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-xs text-slate-300 min-h-[440px]"
                         >
                           （A4 四等分空白卡位）
