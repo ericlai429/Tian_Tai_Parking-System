@@ -1,6 +1,6 @@
 # 🏗️ 天泰營造與勤務管理系統 (Tian Tai Management System)
 
-> **使用單位**：天泰營造 · 三軍總醫院工務所  
+> **使用單位**：天泰營造  
 > **執勤單位**：飛龍保全 / 中華飛龍物業  
 > **GitHub 專案庫**：https://github.com/ericlai429/Tian_Tai_Parking-System  
 > **線上發布站點**：https://ericlai429.github.io/Tian_Tai_Parking-System/  

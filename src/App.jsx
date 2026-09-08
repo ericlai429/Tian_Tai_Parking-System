@@ -132,7 +132,7 @@ export default function App() {
             天泰營造與勤務管理系統 © 2026 Tian-Tai Management
           </div>
           <div className="flex items-center gap-3">
-            <span>現場案場：天泰三總工務所</span>
+            <span>使用單位：天泰營造</span>
             <span>·</span>
             <span>執勤單位：飛龍保全 / 中華飛龍物業</span>
           </div>

@@ -79,7 +79,7 @@ export default function DashboardView({
               天泰三總營造勤務戰情中心
             </h1>
             <p className="text-sm mt-1 flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
-              <span>現場案場：天泰三總工務所</span>
+              <span>使用單位：天泰營造</span>
               <span className="hidden sm:inline">|</span>
               <span className="hidden sm:inline">勤務主管：飛龍保全勤務指揮中心</span>
             </p>
