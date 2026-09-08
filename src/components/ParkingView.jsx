@@ -228,7 +228,7 @@ export default function ParkingView({
               </span>
               {isAdmin && (
                 <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                  👑 後台管理模式已啟用 (t1898)
+                  👑 後台管理模式已啟用
                 </span>
               )}
             </div>
@@ -310,7 +310,7 @@ export default function ParkingView({
             <div className="font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
               <span>已連接雲端試算表：</span>
               <span className="text-emerald-400 font-mono">天泰營造 工地工區大門－車輛管制</span>
-              <span className="px-2 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-bold">由 Admin 編輯 (密碼: t1898)</span>
+              <span className="px-2 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-bold">由 Admin 編輯</span>
             </div>
             <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
               管理員可隨時在 Google 試算表新增、修改車號或職稱，系統支援一鍵同步或離線放行。
@@ -516,7 +516,7 @@ export default function ParkingView({
                           ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30' 
                           : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
                       }`}
-                      title={isAdmin ? "點擊切換通行狀態" : "需要管理員權限 (t1898)"}
+                      title={isAdmin ? "點擊切換通行狀態" : "需要管理員權限"}
                     >
                       {item.status === 'pass' ? '✔ 核准放行' : '✖ 暫停通行'}
                     </button>

@@ -234,7 +234,7 @@ export default function App() {
                   required
                   value={adminPasswordInput}
                   onChange={(e) => { setAdminPasswordInput(e.target.value); setAdminError(''); }}
-                  placeholder="請輸入管理員密碼 (t1898)..."
+                  placeholder="請輸入管理員密碼..."
                   className="w-full px-4 py-3 rounded-xl border text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-500"
                   style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)', color: 'var(--text)' }}
                 />

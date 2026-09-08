@@ -95,7 +95,7 @@ export default function DashboardView({
               </span>
               <h2 className="text-xl sm:text-2xl font-black flex items-center gap-2" style={{ color: 'var(--text)' }}>
                 <Car className="w-6 h-6 text-emerald-400" />
-                <span>現場工區大門 － 車牌快速核對站</span>
+                <span>車牌快速核對區</span>
               </h2>
             </div>
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
@@ -236,12 +236,10 @@ export default function DashboardView({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight" style={{ color: 'var(--text)' }}>
-              天泰營造勤務戰情中心
+              天泰營造停車管理
             </h1>
             <p className="text-sm mt-1 flex flex-wrap items-center gap-2" style={{ color: 'var(--text-muted)' }}>
-              <span>使用單位：天泰營造</span>
-              <span className="hidden sm:inline">|</span>
-              <span>勤務主管：飛龍保全勤務指揮中心</span>
+              <span>使用單位：天泰營造 & 飛龍保全</span>
             </p>
           </div>
 
@@ -260,7 +258,7 @@ export default function DashboardView({
               }}
             >
               {isAdmin ? <Unlock className="w-3.5 h-3.5 text-amber-400" /> : <Lock className="w-3.5 h-3.5 text-slate-400" />}
-              <span>{isAdmin ? 'Admin 已解鎖 (t1898)' : '管理員登入'}</span>
+              <span>{isAdmin ? 'Admin 已解鎖' : '管理員登入'}</span>
             </button>
 
             <button
