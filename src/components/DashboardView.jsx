@@ -99,7 +99,7 @@ export default function DashboardView({
               <span>車牌快速核對區</span>
             </h2>
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-              支援輸入車牌或<strong>「任意數字 3 碼」</strong>（例：<strong>898</strong>、<strong>132</strong>、<strong>079</strong>）或<strong>「通行證流水號」</strong>（例：<strong>01</strong>、<strong>07</strong>）即時放行
+              支援輸入車牌或「任意數字 3 碼」（例：898、132塑）
             </p>
           </div>
 
