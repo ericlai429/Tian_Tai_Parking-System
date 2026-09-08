@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Car, Search, CheckCircle2, XCircle, 
   ExternalLink, Lock, Unlock, ArrowRight, Sparkles, Hash,
-  Camera, Download, Trash2, Clock, Building2
+  Camera, Download, Trash2, Clock, Building2, ShieldCheck, KeyRound
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -16,6 +16,22 @@ export default function DashboardView({
 }) {
   const [quickPlate, setQuickPlate] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+
+  // 保全員放行確認 PIN 碼驗證 (Pin: 888，當班驗證一次即可保持授權)
+  const [isSecurityUnlocked, setIsSecurityUnlocked] = useState(() => {
+    return sessionStorage.getItem('tian_tai_security_auth') === 'true';
+  });
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pendingVehicle, setPendingVehicle] = useState(null);
+  const [pinSuccessToast, setPinSuccessToast] = useState('');
+
+  // 刪除進場紀錄管理員密碼驗證 (密碼: t1898)
+  const [showDeleteAdminModal, setShowDeleteAdminModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null); // 'all' 或 特定 id
+  const [deleteAdminPassword, setDeleteAdminPassword] = useState('');
+  const [deleteAdminError, setDeleteAdminError] = useState('');
 
   // 本日車輛進場紀錄 (自 localStorage 讀取或初始化)
   const [entryLogs, setEntryLogs] = useState(() => {
@@ -45,9 +61,11 @@ export default function DashboardView({
 
   // 新增進場紀錄 (單位, 車牌, 時間[無秒])
   const recordEntry = (vehicle) => {
+    if (!vehicle || !vehicle.plate) return;
     const timeStr = getEntryTimeString();
+    const uniqueId = `log_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const newLog = {
-      id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      id: uniqueId,
       plate: vehicle.plate,
       name: vehicle.name || '車主',
       unit: vehicle.unit || '外部單位',
@@ -58,21 +76,49 @@ export default function DashboardView({
     };
 
     setEntryLogs(prev => {
-      // 避免 1 分鐘內重複點擊同一台車刷入多筆
-      if (prev.length > 0 && prev[0].plate === newLog.plate && prev[0].time === newLog.time) {
-        return prev;
+      const prevList = Array.isArray(prev) ? prev : [];
+      // 若剛好在同一分鐘同一台車重複按，更新該筆時間或允許紀錄但給予不同唯一 key
+      const updated = [newLog, ...prevList];
+      try {
+        localStorage.setItem('tian_tai_entry_logs', JSON.stringify(updated));
+      } catch (e) {
+        console.error('LocalStorage write error:', e);
       }
-      const updated = [newLog, ...prev];
-      localStorage.setItem('tian_tai_entry_logs', JSON.stringify(updated));
       return updated;
     });
   };
 
-  // 清除進場紀錄 (限 Admin 或換班歸零)
-  const handleClearLogs = () => {
-    if (confirm('確定要清空本日進場紀錄嗎？')) {
-      setEntryLogs([]);
-      localStorage.removeItem('tian_tai_entry_logs');
+  // 觸發刪除請求 (需要管理員密碼驗證)
+  const requestDeleteLog = (target = 'all') => {
+    setDeleteTargetId(target);
+    setDeleteAdminPassword('');
+    setDeleteAdminError('');
+    setShowDeleteAdminModal(true);
+  };
+
+  // 驗證管理員密碼並執行刪除
+  const handleConfirmDeleteWithAdmin = (e) => {
+    e.preventDefault();
+    if (deleteAdminPassword.trim() === 't1898') {
+      if (deleteTargetId === 'all') {
+        setEntryLogs([]);
+        localStorage.removeItem('tian_tai_entry_logs');
+        setPinSuccessToast('已清空本日所有進場紀錄！');
+      } else {
+        setEntryLogs(prev => {
+          const updated = prev.filter(item => item.id !== deleteTargetId);
+          localStorage.setItem('tian_tai_entry_logs', JSON.stringify(updated));
+          return updated;
+        });
+        setPinSuccessToast('已成功刪除該筆車輛進場紀錄！');
+      }
+      setShowDeleteAdminModal(false);
+      setDeleteTargetId(null);
+      setDeleteAdminPassword('');
+      setDeleteAdminError('');
+      setTimeout(() => setPinSuccessToast(''), 3000);
+    } else {
+      setDeleteAdminError('管理員密碼錯誤！無法刪除紀錄');
     }
   };
 
@@ -191,10 +237,11 @@ export default function DashboardView({
     link.click();
   };
 
-  // 即時 3 碼 / 流水號 / 模糊過濾候選車輛
+  // 即時 2~3 碼 / 模糊過濾候選車輛 (限制：只輸入 1 碼時不動作，防範資料探測蒐集)
   const candidates = useMemo(() => {
     const q = quickPlate.trim();
-    if (!q) return [];
+    // 嚴格限制：小於 2 碼不觸發過濾，防止單一字元暴力枚舉整批名冊
+    if (!q || q.length < 2) return [];
     
     const qClean = cleanStr(q);
     const qDigits = extractDigits(q);
@@ -204,34 +251,50 @@ export default function DashboardView({
       const plateDigits = extractDigits(item.plate);
       const passNo = item.passNo ? String(item.passNo) : '';
 
-      // 若查詢流水號 (如輸入 1, 01, 7, 07, 14 等)
-      if (passNo && (passNo === q || passNo === q.padStart(2, '0') || passNo.endsWith(q))) {
+      // 流水號比對 (至少2碼，如 01, 02, 14...)
+      if (passNo && (passNo === q || passNo === q.padStart(3, '0') || passNo.endsWith(q))) {
         return true;
       }
-      // 若使用者輸入的是純數字 (例如輸入 3 碼數字：898, 132, 079 等)
+      // 純數字比對 (至少 2 碼，例：98, 132, 079)
       if (qDigits && qDigits.length >= 2 && plateDigits.includes(qDigits)) {
         return true;
       }
-      // 英文與數字混合或完整車牌比對
-      if (plateClean.includes(qClean)) {
+      // 完整或局部車牌比對 (至少2字元)
+      if (qClean.length >= 2 && plateClean.includes(qClean)) {
         return true;
       }
-      // 車主姓名模糊搜尋
-      if (item.name && item.name.includes(q)) {
+      // 車主姓名模糊搜尋 (至少2字元)
+      if (q.length >= 2 && item.name && item.name.includes(q)) {
         return true;
       }
       return false;
     }).slice(0, 10);
   }, [parkingList, quickPlate]);
 
-  // 選中或確認驗證 (自動記錄進入車子時間)
-  const handleSelectVehicle = (vehicle) => {
+  // 選中或確認驗證 (若當班已輸入 888 解鎖，直接放行記錄；未解鎖時才彈出 PIN 碼確認視窗)
+  const triggerReleaseWithPin = (vehicle) => {
     setSelectedVehicle(vehicle);
     setQuickPlate(vehicle.plate);
-    recordEntry(vehicle); // 自動記入進場時間
-    if (vehicle.status === 'pass') {
-      confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+
+    // 若保全當班已驗證解鎖過，直接放行並存檔，無需每台車重複輸入
+    if (isSecurityUnlocked) {
+      recordEntry(vehicle);
+      if (vehicle.status === 'pass') {
+        confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
+      }
+      setPinSuccessToast(`車輛 [${vehicle.plate}] 已核准放行並記錄時間。`);
+      setTimeout(() => setPinSuccessToast(''), 2500);
+      return;
     }
+
+    setPendingVehicle(vehicle);
+    setPinInput('');
+    setPinError('');
+    setShowPinModal(true);
+  };
+
+  const handleSelectVehicle = (vehicle) => {
+    triggerReleaseWithPin(vehicle);
   };
 
   const handleQuickSubmit = (e) => {
@@ -239,13 +302,13 @@ export default function DashboardView({
     if (!quickPlate.trim()) return;
 
     if (candidates.length === 1) {
-      handleSelectVehicle(candidates[0]);
+      triggerReleaseWithPin(candidates[0]);
       return;
     }
 
     const exact = parkingList.find(p => cleanStr(p.plate) === cleanStr(quickPlate));
     if (exact) {
-      handleSelectVehicle(exact);
+      triggerReleaseWithPin(exact);
     } else {
       const visitor = {
         plate: quickPlate.trim().toUpperCase(),
@@ -254,8 +317,45 @@ export default function DashboardView({
         unit: '外部訪客',
         notes: '此車輛未在名冊中，警衛請依標準訪客程序登記換證。'
       };
-      setSelectedVehicle(visitor);
-      recordEntry(visitor); // 訪客進入亦同步記錄時間
+      triggerReleaseWithPin(visitor);
+    }
+  };
+
+  // 驗證保全 PIN 碼 (需輸入 888 才能正常存檔本日進場留存，成功後保持當班授權)
+  const handleVerifyPin = (e) => {
+    e.preventDefault();
+    if (pinInput.trim() === '888') {
+      setIsSecurityUnlocked(true);
+      sessionStorage.setItem('tian_tai_security_auth', 'true');
+
+      if (pendingVehicle) {
+        recordEntry(pendingVehicle); // 正常存檔進場紀錄
+        if (pendingVehicle.status === 'pass') {
+          confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+        }
+      }
+      setShowPinModal(false);
+      setPinInput('');
+      setPinError('');
+      setPinSuccessToast(`保全授權成功！車輛 [${pendingVehicle?.plate}] 已放行，當班已保持解鎖狀態。`);
+      setTimeout(() => setPinSuccessToast(''), 3500);
+      setPendingVehicle(null);
+    } else {
+      setPinError('PIN 碼錯誤！請輸入保全員確認碼 888');
+    }
+  };
+
+  // 保全授權鎖定切換
+  const toggleSecurityLock = () => {
+    if (isSecurityUnlocked) {
+      setIsSecurityUnlocked(false);
+      sessionStorage.removeItem('tian_tai_security_auth');
+      setPinSuccessToast('已鎖定保全授權，下次驗證車輛需重新輸入 PIN 碼。');
+      setTimeout(() => setPinSuccessToast(''), 2500);
+    } else {
+      setPinInput('');
+      setPinError('');
+      setShowPinModal(true);
     }
   };
 
@@ -271,12 +371,27 @@ export default function DashboardView({
               <Car className="w-5 h-5 text-emerald-400" />
               <span>車牌快速核對區</span>
             </h2>
-            <div className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-              {parkingList.length} 輛 (01~16)
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={toggleSecurityLock}
+                className={`text-[11px] font-black px-2 py-0.5 rounded-full border transition-all flex items-center gap-1 ${
+                  isSecurityUnlocked
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
+                    : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                }`}
+                title={isSecurityUnlocked ? "保全當班中：已授權放行（點擊可鎖定）" : "尚未授權：點擊輸入保全 PIN 碼 888"}
+              >
+                <ShieldCheck className="w-3 h-3" />
+                <span>{isSecurityUnlocked ? '保全已解鎖' : '需保全PIN'}</span>
+              </button>
+              <div className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                {parkingList.length} 輛
+              </div>
             </div>
           </div>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            支援輸入車牌或「任意數字 3 碼」（例：898、132）
+            支援輸入車牌或「任意數字 2~3 碼」（例：98、132）
           </p>
         </div>
 
@@ -291,7 +406,7 @@ export default function DashboardView({
                 setQuickPlate(e.target.value);
                 if (!e.target.value.trim()) setSelectedVehicle(null);
               }}
-              placeholder="輸入車牌或數字 3 碼..."
+              placeholder="輸入車牌或數字 2~3 碼..."
               className="w-full pl-11 pr-3 py-3 rounded-xl border text-lg font-mono font-black tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
               style={{ 
                 backgroundColor: 'var(--card-hover)', 
@@ -438,10 +553,10 @@ export default function DashboardView({
 
             {entryLogs.length > 0 && (
               <button
-                onClick={handleClearLogs}
+                onClick={() => requestDeleteLog('all')}
                 className="p-1.5 rounded-lg border text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
                 style={{ borderColor: 'var(--card-border)' }}
-                title="清空紀錄"
+                title="清空本日所有紀錄 (需管理員密碼)"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -452,7 +567,7 @@ export default function DashboardView({
         {/* 進場紀錄清單列表 (單位, 車牌, 時間無秒) */}
         {entryLogs.length === 0 ? (
           <div className="py-6 text-center text-xs text-slate-400">
-            尚無車輛進場紀錄。於上方核對通過後，將自動記錄時間並供存檔。
+            尚無車輛進場紀錄。於上方核對通過並輸入保全 Pin 碼後，將自動記錄時間並供存檔。
           </div>
         ) : (
           <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
@@ -492,14 +607,229 @@ export default function DashboardView({
                   </span>
                 </div>
 
-                <div className="font-mono text-[11px] font-bold text-emerald-400 shrink-0 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  {log.time}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="font-mono text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    {log.time}
+                  </div>
+                  <button
+                    onClick={() => requestDeleteLog(log.id)}
+                    className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-all"
+                    title="刪除此筆紀錄 (需管理員密碼)"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* 成功放行提示條 */}
+      {pinSuccessToast && (
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-2xl flex items-center gap-2 animate-bounce border border-emerald-400">
+          <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+          <span>{pinSuccessToast}</span>
+        </div>
+      )}
+
+      {/* 保全放行 PIN 碼驗證彈窗 (密碼: 888) */}
+      {showPinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm rounded-2xl border p-5 shadow-2xl space-y-4"
+               style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+            
+            <div className="flex items-center justify-between border-b pb-3"
+                 style={{ borderColor: 'var(--card-border)' }}>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm tracking-tight" style={{ color: 'var(--text)' }}>
+                    保全員放行授權確認
+                  </h3>
+                  <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                    車輛即將進場放行並登記時間
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowPinModal(false);
+                  setPinInput('');
+                  setPinError('');
+                  setPendingVehicle(null);
+                }}
+                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* 待放行車輛摘要 */}
+            {pendingVehicle && (
+              <div className="p-3 rounded-xl border space-y-1 text-xs"
+                   style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)' }}>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-black text-base text-sky-400">
+                    {pendingVehicle.plate}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                    pendingVehicle.status === 'pass' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                  }`}>
+                    {pendingVehicle.status === 'pass' ? '核准放行' : '未註冊/臨時訪客'}
+                  </span>
+                </div>
+                <div className="text-[11px] font-semibold" style={{ color: 'var(--text)' }}>
+                  {pendingVehicle.unit} - {pendingVehicle.name} ({pendingVehicle.subItem || '人員'})
+                </div>
+              </div>
+            )}
+
+            {/* PIN 碼輸入表單 */}
+            <form onSubmit={handleVerifyPin} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold mb-1.5" style={{ color: 'var(--text)' }}>
+                  請輸入保全確認 PIN 碼：
+                </label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="password"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    value={pinInput}
+                    onChange={(e) => {
+                      setPinInput(e.target.value);
+                      if (pinError) setPinError('');
+                    }}
+                    placeholder="輸入保全 PIN 碼 (888)"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border text-center font-mono font-black text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)', color: 'var(--text)' }}
+                    autoFocus
+                  />
+                </div>
+                {pinError && (
+                  <p className="text-xs text-rose-400 font-bold mt-1.5 flex items-center gap-1">
+                    <span>⚠</span> {pinError}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPinModal(false);
+                    setPinInput('');
+                    setPinError('');
+                    setPendingVehicle(null);
+                  }}
+                  className="flex-1 py-2 rounded-xl text-xs font-bold border transition-colors"
+                  style={{ borderColor: 'var(--card-border)', color: 'var(--text-muted)' }}
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 transition-all active:scale-95"
+                >
+                  確認放行存檔
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 刪除車輛紀錄管理員密碼驗證彈窗 (密碼: t1898) */}
+      {showDeleteAdminModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm rounded-2xl border p-5 shadow-2xl space-y-4"
+               style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+            
+            <div className="flex items-center justify-between border-b pb-3"
+                 style={{ borderColor: 'var(--card-border)' }}>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-400">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm tracking-tight" style={{ color: 'var(--text)' }}>
+                    {deleteTargetId === 'all' ? '清空進場紀錄授權' : '刪除單筆紀錄授權'}
+                  </h3>
+                  <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                    此操作需要輸入管理員密碼
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowDeleteAdminModal(false);
+                  setDeleteAdminPassword('');
+                  setDeleteAdminError('');
+                  setDeleteTargetId(null);
+                }}
+                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmDeleteWithAdmin} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold mb-1.5" style={{ color: 'var(--text)' }}>
+                  請輸入後台管理員密碼：
+                </label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="password"
+                    value={deleteAdminPassword}
+                    onChange={(e) => {
+                      setDeleteAdminPassword(e.target.value);
+                      if (deleteAdminError) setDeleteAdminError('');
+                    }}
+                    placeholder="輸入管理員密碼"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)', color: 'var(--text)' }}
+                    autoFocus
+                  />
+                </div>
+                {deleteAdminError && (
+                  <p className="text-xs text-rose-400 font-bold mt-1.5 flex items-center gap-1">
+                    <span>⚠</span> {deleteAdminError}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteAdminModal(false);
+                    setDeleteAdminPassword('');
+                    setDeleteAdminError('');
+                    setDeleteTargetId(null);
+                  }}
+                  className="flex-1 py-2 rounded-xl text-xs font-bold border transition-colors"
+                  style={{ borderColor: 'var(--card-border)', color: 'var(--text-muted)' }}
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/30 transition-all active:scale-95"
+                >
+                  確認刪除
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
