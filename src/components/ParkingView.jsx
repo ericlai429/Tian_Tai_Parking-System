@@ -206,41 +206,28 @@ export default function ParkingView({
       return (
         item.plate.toLowerCase().includes(q) ||
         item.name.toLowerCase().includes(q) ||
-        item.unit.toLowerCase().includes(q) ||
-        (item.notes && item.notes.toLowerCase().includes(q))
+        item.unit.toLowerCase().includes(q)
       );
     });
   }, [parkingList, filterType, searchQuery]);
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* 頂部操作控制列 */}
-      <div className="p-6 rounded-2xl border" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="space-y-4 animate-fadeIn">
+      {/* 頂部簡潔控制列 */}
+      <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+        <div className="flex items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-lg text-xs font-black bg-emerald-500 text-white flex items-center gap-1.5">
-                <Car className="w-3.5 h-3.5" />
-                智慧停車通行管制系統
+              <span className="text-base font-black" style={{ color: 'var(--text)' }}>
+                車輛名冊
               </span>
-              <span className="text-xs font-semibold text-slate-400">
-                名冊總計：{parkingList.length} 輛車
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                共 {parkingList.length} 輛
               </span>
-              {isAdmin && (
-                <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                  👑 後台管理模式已啟用
-                </span>
-              )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black mt-2 tracking-tight" style={{ color: 'var(--text)' }}>
-              車輛放行查驗與名冊中心
-            </h1>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-              長官座車、常駐工程車與廠商出入放行查核。支援即時車牌比對與 Google 試算表同步。
-            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {/* 隱藏的檔案上傳 input */}
             <input 
               type="file" 
@@ -250,176 +237,50 @@ export default function ParkingView({
               className="hidden" 
             />
 
-            {/* 一鍵雲端同步按鈕 */}
             <button
               onClick={handleSyncCloudSheet}
               disabled={isSyncing}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
-              title="立即從 Google 試算表抓取最新名冊"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+              title="雲端同步名冊"
             >
-              <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? '同步中...' : '雲端同步名冊'}</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? '同步中' : '同步'}</span>
             </button>
 
-            {/* 匯入 Excel 按鈕 (需要 Admin 權限) */}
-            <button
-              onClick={() => {
-                if (isAdmin) fileInputRef.current?.click();
-                else onRequireAdmin();
-              }}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 flex items-center gap-2 transition-all active:scale-95"
-            >
-              <Upload className="w-4 h-4" />
-              <span>匯入新 Excel 車冊</span>
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md flex items-center gap-1.5 transition-all active:scale-95"
+                title="匯入新 Excel"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>匯入</span>
+              </button>
+            )}
 
-            {/* 匯出 Excel 按鈕 */}
             <button
               onClick={() => exportParkingToExcel(parkingList)}
               disabled={parkingList.length === 0}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold border flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-              style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--card-hover)', color: 'var(--text)' }}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 transition-all hover:bg-slate-800/20 disabled:opacity-50"
+              style={{ borderColor: 'var(--card-border)', color: 'var(--text)' }}
+              title="匯出 Excel"
             >
-              <Download className="w-4 h-4 text-emerald-400" />
-              <span>匯出 Excel 清單</span>
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <span>匯出</span>
             </button>
 
-            {/* 手動新增按鈕 (需要 Admin 權限) */}
-            <button
-              onClick={() => {
-                if (isAdmin) setShowAddModal(true);
-                else onRequireAdmin();
-              }}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 flex items-center gap-1.5 transition-all active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              <span>手動新增車輛</span>
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 flex items-center gap-1 transition-all active:scale-95"
+                title="手動新增車輛"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>新增</span>
+              </button>
+            )}
           </div>
         </div>
-      </div>
-
-      {/* 雲端試算表連結與 Admin 編輯橫幅 */}
-      <div className="p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-3"
-           style={{ backgroundColor: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
-        <div className="flex items-center gap-3">
-          <span className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-white text-xs bg-emerald-600 shadow-sm">
-            <Cloud className="w-4 h-4" />
-          </span>
-          <div className="text-xs">
-            <div className="font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
-              <span>已連接雲端試算表：</span>
-              <span className="text-emerald-400 font-mono">天泰營造 工地工區大門－車輛管制</span>
-              <span className="px-2 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-bold">由 Admin 編輯</span>
-            </div>
-            <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              管理員可隨時在 Google 試算表新增、修改車號或職稱，系統支援一鍵同步或離線放行。
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <a
-            href={cloudConfig?.parkingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20 flex items-center gap-1.5 transition-all"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>線上以 Admin 編輯試算表</span>
-          </a>
-        </div>
-      </div>
-
-      {/* 車牌快速查驗儀表（大字體、高對比） */}
-      <div className="p-6 rounded-2xl border space-y-4" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-        <form onSubmit={handleVerifyPlate} className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="輸入車牌號碼 (例：1079-KS 或 BVU-3132)..."
-              className="w-full pl-12 pr-4 py-3.5 rounded-xl border text-lg sm:text-xl font-mono font-black tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              style={{ 
-                backgroundColor: 'var(--card-hover)', 
-                borderColor: 'var(--card-border)',
-                color: 'var(--text)' 
-              }}
-              autoFocus
-            />
-          </div>
-          <button
-            type="submit"
-            className="px-8 py-3.5 rounded-xl text-base font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0"
-          >
-            <span>即時驗證放行</span>
-          </button>
-        </form>
-
-        {/* 查驗放行結果卡 */}
-        {verifiedVehicle && (
-          <div className={`p-6 rounded-2xl border transition-all ${
-            verifiedVehicle.status === 'pass'
-              ? 'border-emerald-500/60 bg-emerald-500/10 glow-emerald'
-              : 'border-rose-500/60 bg-rose-500/10 glow-rose'
-          }`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-3xl sm:text-4xl font-black tracking-widest" style={{ color: 'var(--text)' }}>
-                    {verifiedVehicle.plate}
-                  </span>
-                  {verifiedVehicle.type === 'vip' && (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-500 text-slate-950 flex items-center gap-1 shadow-md">
-                      <Crown className="w-3.5 h-3.5" />
-                      長官貴賓車輛
-                    </span>
-                  )}
-                </div>
-
-                <div className="text-sm font-semibold flex items-center gap-3" style={{ color: 'var(--text)' }}>
-                  <span>人員：{verifiedVehicle.name}</span>
-                  <span>|</span>
-                  <span>單位：{verifiedVehicle.unit}</span>
-                  {verifiedVehicle.subItem && (
-                    <>
-                      <span>|</span>
-                      <span>職稱：{verifiedVehicle.subItem}</span>
-                    </>
-                  )}
-                </div>
-
-                {verifiedVehicle.notes && (
-                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    備註：{verifiedVehicle.notes}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col sm:items-end gap-2 shrink-0">
-                <div className={`px-6 py-2.5 rounded-xl text-lg font-black uppercase tracking-wider shadow-lg flex items-center gap-2 ${
-                  verifiedVehicle.status === 'pass'
-                    ? 'bg-emerald-500 text-white shadow-emerald-500/40'
-                    : 'bg-rose-500 text-white shadow-rose-500/40'
-                }`}>
-                  {verifiedVehicle.status === 'pass' ? (
-                    <>
-                      <CheckCircle2 className="w-6 h-6" />
-                      <span>符合通過 OK!</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-6 h-6" />
-                      <span>未通過 DENIED</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 車輛名冊表格 */}
@@ -464,42 +325,42 @@ export default function ParkingView({
           </div>
         </div>
 
-        {/* 表格 */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        {/* 表格 (設定 min-w 與 whitespace-nowrap 防止車牌斷行與人名變直列) */}
+        <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--card-border)' }}>
+          <table className="w-full text-left border-collapse text-xs min-w-[700px]">
             <thead>
-              <tr className="border-b" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--card-hover)' }}>
-                <th className="p-3 font-bold" style={{ color: 'var(--text)' }}>車牌號碼</th>
-                <th className="p-3 font-bold" style={{ color: 'var(--text)' }}>姓名/人員</th>
-                <th className="p-3 font-bold" style={{ color: 'var(--text)' }}>所屬公司</th>
-                <th className="p-3 font-bold" style={{ color: 'var(--text)' }}>職稱/身分</th>
-                <th className="p-3 font-bold" style={{ color: 'var(--text)' }}>備註</th>
-                <th className="p-3 font-bold" style={{ color: 'var(--text)' }}>類別</th>
-                <th className="p-3 font-bold text-center" style={{ color: 'var(--text)' }}>通行狀態</th>
+              <tr className="border-b whitespace-nowrap" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--card-hover)' }}>
+                <th className="p-3 font-bold w-12 text-center" style={{ color: 'var(--text-dim)' }}>編號</th>
+                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>車牌號碼</th>
+                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>姓名 / 人員</th>
+                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>所屬公司</th>
+                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>職稱 / 身分</th>
+                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>類別</th>
+                <th className="p-3 font-bold text-center whitespace-nowrap" style={{ color: 'var(--text)' }}>通行狀態</th>
                 {isAdmin && (
-                  <th className="p-3 font-bold text-right" style={{ color: 'var(--text)' }}>管理操作</th>
+                  <th className="p-3 font-bold text-right whitespace-nowrap" style={{ color: 'var(--text)' }}>操作</th>
                 )}
               </tr>
             </thead>
             <tbody>
               {filteredList.map((item) => (
-                <tr key={item.id} className="border-b hover:bg-slate-800/10 transition-colors" style={{ borderColor: 'var(--card-border)' }}>
-                  <td className="p-3 font-mono font-black text-sm tracking-wider" style={{ color: 'var(--text)' }}>
+                <tr key={item.id} className="border-b hover:bg-slate-800/10 transition-colors whitespace-nowrap" style={{ borderColor: 'var(--card-border)' }}>
+                  <td className="p-3 text-center font-mono font-bold text-slate-400">
+                    {item.passNo ? `#${item.passNo}` : '-'}
+                  </td>
+                  <td className="p-3 font-mono font-black text-sm tracking-wider whitespace-nowrap" style={{ color: 'var(--text)' }}>
                     {item.plate}
                   </td>
-                  <td className="p-3 font-semibold" style={{ color: 'var(--text)' }}>
+                  <td className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>
                     {item.name}
                   </td>
-                  <td className="p-3" style={{ color: 'var(--text-muted)' }}>
+                  <td className="p-3 whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
                     {item.unit}
                   </td>
-                  <td className="p-3 font-semibold" style={{ color: 'var(--text)' }}>
+                  <td className="p-3 font-medium whitespace-nowrap" style={{ color: 'var(--text)' }}>
                     {item.subItem || '-'}
                   </td>
-                  <td className="p-3" style={{ color: 'var(--text-dim)' }}>
-                    {item.notes || '-'}
-                  </td>
-                  <td className="p-3">
+                  <td className="p-3 whitespace-nowrap">
                     <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                       item.type === 'vip' 
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
@@ -508,10 +369,10 @@ export default function ParkingView({
                       {item.type === 'vip' ? '👑 VIP長官' : (item.type === 'temp' ? '貨車運補' : '常駐固定')}
                     </span>
                   </td>
-                  <td className="p-3 text-center">
+                  <td className="p-3 text-center whitespace-nowrap">
                     <button
                       onClick={() => toggleStatus(item.id)}
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-black tracking-wider transition-all ${
+                      className={`px-3 py-1 rounded-full text-[11px] font-black tracking-wider transition-all ${
                         item.status === 'pass' 
                           ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30' 
                           : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
@@ -522,7 +383,7 @@ export default function ParkingView({
                     </button>
                   </td>
                   {isAdmin && (
-                    <td className="p-3 text-right">
+                    <td className="p-3 text-right whitespace-nowrap">
                       <button
                         onClick={() => handleDelete(item.id)}
                         className="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"
