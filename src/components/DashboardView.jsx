@@ -658,47 +658,39 @@ export default function DashboardView({
             尚無車輛進場紀錄。於上方核對通過或點擊「不在名冊內 (備查)」後，將自動記錄時間並供存檔。
           </div>
         ) : (
-          <div className="space-y-1.5 min-h-[120px] transition-all">
+          <div className="space-y-2 min-h-[120px] transition-all">
             {entryLogs.map((log, idx) => (
               <div
                 key={log.id}
-                className="p-2.5 rounded-lg border flex items-center justify-between gap-2 text-xs transition-all"
+                className="p-2.5 sm:p-3 rounded-xl border flex flex-col gap-1.5 text-xs transition-all shadow-xs"
                 style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)' }}
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-mono text-[11px] font-bold text-slate-400 w-5 text-center shrink-0">
-                    {String(idx + 1).padStart(2, '0')}
-                  </span>
-                  {log.passNo && (
+                {/* 上排：序號、通行證號、車牌號碼 (大字辨識) 與右側刪除鈕 */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono text-xs font-bold text-slate-400 w-5 text-center shrink-0">
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+                    {log.passNo && (
+                      <span 
+                        className="font-mono text-xs font-black px-1.5 py-0.5 rounded shrink-0 border"
+                        style={{ 
+                          backgroundColor: 'var(--passno-bg)', 
+                          color: 'var(--passno-text)',
+                          borderColor: 'currentColor'
+                        }}
+                      >
+                        #{log.passNo}
+                      </span>
+                    )}
                     <span 
-                      className="font-mono text-[11px] font-black px-1.5 py-0.5 rounded shrink-0 border"
-                      style={{ 
-                        backgroundColor: 'var(--passno-bg)', 
-                        color: 'var(--passno-text)',
-                        borderColor: 'currentColor'
-                      }}
+                      className="font-mono font-black text-base sm:text-lg tracking-wider"
+                      style={{ color: 'var(--plate-color)' }}
                     >
-                      #{log.passNo}
+                      {log.plate}
                     </span>
-                  )}
-                  <span 
-                    className="font-mono font-black text-sm tracking-wider shrink-0"
-                    style={{ color: 'var(--plate-color)' }}
-                  >
-                    {log.plate}
-                  </span>
-                  <span className="truncate font-semibold" style={{ color: 'var(--text)' }}>
-                    {log.unit}
-                    <span className="text-[11px] opacity-75 font-normal ml-1">
-                      ({log.subItem || log.name})
-                    </span>
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <div className="font-mono text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                    {log.time}
                   </div>
+
                   <button
                     type="button"
                     onClick={(e) => {
@@ -706,11 +698,25 @@ export default function DashboardView({
                       e.stopPropagation();
                       requestDeleteLog(log.id);
                     }}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer active:scale-90 touch-manipulation"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer active:scale-90 touch-manipulation shrink-0"
                     title="刪除此筆紀錄 (需管理員密碼)"
                   >
                     <Trash2 className="w-3.5 h-3.5 pointer-events-none" />
                   </button>
+                </div>
+
+                {/* 下排：所屬單位與姓名職稱 (左側) + 進場時間標章 (右側，絕不重疊) */}
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-700/30 text-[11px] sm:text-xs">
+                  <div className="font-medium truncate min-w-0" style={{ color: 'var(--text)' }}>
+                    <span className="font-bold">{log.unit}</span>
+                    <span className="text-slate-400 font-normal ml-1">
+                      ({log.subItem || log.name})
+                    </span>
+                  </div>
+
+                  <div className="font-mono text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0 whitespace-nowrap">
+                    {log.time}
+                  </div>
                 </div>
               </div>
             ))}
