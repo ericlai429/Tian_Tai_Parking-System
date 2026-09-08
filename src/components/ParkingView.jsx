@@ -289,75 +289,86 @@ export default function ParkingView({
   return (
     <div className="space-y-4 animate-fadeIn">
       {/* 頂部簡潔控制列 */}
-      <div className="p-4 rounded-xl border" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-base font-black" style={{ color: 'var(--text)' }}>
-                車輛名冊
-              </span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-                共 {parkingList.length} 輛
-              </span>
-            </div>
+      <div className="p-3.5 sm:p-4 rounded-xl border space-y-3" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+        {/* 第一行：標題與數量統計 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-black tracking-tight" style={{ color: 'var(--text)' }}>
+              車輛名冊
+            </span>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              共 {parkingList.length} 輛
+            </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* 隱藏的檔案上傳 input */}
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileUpload} 
-              accept=".xlsx, .xls, .csv" 
-              className="hidden" 
-            />
-
-            {isAdmin && (
-              <button
-                onClick={handleSyncCloudSheet}
-                disabled={isSyncing}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
-                title="雲端同步名冊"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span>{isSyncing ? '同步中' : '同步'}</span>
-              </button>
-            )}
-
-            {isAdmin && (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md flex items-center gap-1.5 transition-all active:scale-95"
-                title="匯入新 Excel"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                <span>匯入</span>
-              </button>
-            )}
-
+          {!isAdmin && (
             <button
               onClick={() => exportParkingToExcel(parkingList)}
               disabled={parkingList.length === 0}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 transition-all hover:bg-slate-800/20 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 transition-all hover:bg-slate-800/20 disabled:opacity-50 cursor-pointer"
               style={{ borderColor: 'var(--card-border)', color: 'var(--text)' }}
               title="匯出 Excel"
             >
               <Download className="w-3.5 h-3.5 text-emerald-400" />
-              <span>匯出</span>
+              <span>匯出 Excel</span>
             </button>
+          )}
+        </div>
 
-            {isAdmin && (
+        {/* 隱藏的檔案上傳 input */}
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleFileUpload} 
+          accept=".xlsx, .xls, .csv" 
+          className="hidden" 
+        />
+
+        {/* 第二行：功能按鈕獨立成行 (平分整行寬度，大按鍵好按，完全不擠壓炸框) */}
+        {isAdmin && (
+          <div className="pt-2 border-t border-slate-800/80">
+            <div className="grid grid-cols-4 gap-2">
+              <button
+                onClick={handleSyncCloudSheet}
+                disabled={isSyncing}
+                className="w-full py-2 px-1 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                title="雲端同步名冊"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? '同步中' : '同步'}</span>
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-2 px-1 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                title="匯入新 Excel"
+              >
+                <Upload className="w-3.5 h-3.5 shrink-0" />
+                <span>匯入</span>
+              </button>
+
+              <button
+                onClick={() => exportParkingToExcel(parkingList)}
+                disabled={parkingList.length === 0}
+                className="w-full py-2 px-1 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all hover:bg-slate-800/20 disabled:opacity-50 cursor-pointer"
+                style={{ borderColor: 'var(--card-border)', color: 'var(--text)' }}
+                title="匯出 Excel"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <span>匯出</span>
+              </button>
+
               <button
                 onClick={() => setShowAddModal(true)}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 flex items-center gap-1 transition-all active:scale-95"
+                className="w-full py-2 px-1 rounded-xl text-xs font-bold border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
                 title="手動新增車輛"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5 shrink-0" />
                 <span>新增</span>
               </button>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* 車輛名冊表格 */}
