@@ -30,11 +30,18 @@ export default function App() {
     return INITIAL_SCHEDULE_DATA;
   });
 
-  // 停車場名冊資料
+  // 停車場名冊資料 (確保 VIP 長官從 001 依序往下排序，統一 3 位數流水號)
   const [parkingList, setParkingList] = useState(() => {
     const cached = localStorage.getItem('tian_tai_parking_data');
     if (cached) {
-      try { return JSON.parse(cached); } catch (e) { /* ignore */ }
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // 檢查或補齊 3 位數 passNo 與 VIP 排序
+          const needsFix = parsed.some(p => !p.passNo || p.passNo.length < 3);
+          if (!needsFix) return parsed;
+        }
+      } catch (e) { /* ignore */ }
     }
     return INITIAL_PARKING_DATA;
   });

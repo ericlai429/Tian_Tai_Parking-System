@@ -194,9 +194,19 @@ export default function ParkingView({
     localStorage.setItem('tian_tai_parking_data', JSON.stringify(updated));
   };
 
-  // 過濾車輛列表
+  // 格式化流水號為 3 碼 (例如 001, 002, 004...)
+  const formatPassNo = (item, idx) => {
+    if (item.passNo) {
+      const num = parseInt(String(item.passNo).replace(/\D/g, ''), 10);
+      if (!isNaN(num)) return String(num).padStart(3, '0');
+      return String(item.passNo);
+    }
+    return String(idx + 1).padStart(3, '0');
+  };
+
+  // 過濾並排序車輛列表：VIP 長官從上而下優先排列，並依 001, 002... 依序往下排序
   const filteredList = useMemo(() => {
-    return parkingList.filter(item => {
+    const list = parkingList.filter(item => {
       if (filterType === 'vip' && item.type !== 'vip') return false;
       if (filterType === 'regular' && item.type !== 'regular') return false;
       if (filterType === 'temp' && item.type !== 'temp') return false;
@@ -206,8 +216,21 @@ export default function ParkingView({
       return (
         item.plate.toLowerCase().includes(q) ||
         item.name.toLowerCase().includes(q) ||
-        item.unit.toLowerCase().includes(q)
+        item.unit.toLowerCase().includes(q) ||
+        (item.passNo && String(item.passNo).includes(q))
       );
+    });
+
+    // 排序：VIP長官置頂優先，同等級內依 passNo 數字升冪排序 (001 -> 002 -> 003...)
+    return [...list].sort((a, b) => {
+      const aIsVip = a.type === 'vip' ? 1 : 0;
+      const bIsVip = b.type === 'vip' ? 1 : 0;
+      if (aIsVip !== bIsVip) {
+        return bIsVip - aIsVip; // VIP 長官在前
+      }
+      const aNum = parseInt(String(a.passNo || '999').replace(/\D/g, ''), 10) || 999;
+      const bNum = parseInt(String(b.passNo || '999').replace(/\D/g, ''), 10) || 999;
+      return aNum - bNum;
     });
   }, [parkingList, filterType, searchQuery]);
 
@@ -343,10 +366,12 @@ export default function ParkingView({
               </tr>
             </thead>
             <tbody>
-              {filteredList.map((item) => (
+              {filteredList.map((item, idx) => (
                 <tr key={item.id} className="border-b hover:bg-slate-800/10 transition-colors whitespace-nowrap" style={{ borderColor: 'var(--card-border)' }}>
-                  <td className="p-3 text-center font-mono font-bold text-slate-400">
-                    {item.passNo ? `#${item.passNo}` : '-'}
+                  <td className="p-3 text-center font-mono font-black">
+                    <span className="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-xs">
+                      {formatPassNo(item, idx)}
+                    </span>
                   </td>
                   <td className="p-3 font-mono font-black text-sm tracking-wider whitespace-nowrap" style={{ color: 'var(--text)' }}>
                     {item.plate}

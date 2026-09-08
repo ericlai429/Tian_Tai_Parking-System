@@ -1,11 +1,12 @@
 // 預設 Google 雲端試算表網址 (由 Admin 編輯)
 export const DEFAULT_PARKING_SHEET_URL = "https://docs.google.com/spreadsheets/d/1QJkm5rNHtyQN84awlHWoz4n9jE8NFogk4I4k4x3FPok/edit?gid=239543721#gid=239543721";
 
-// 初始車輛名冊 (依 0908 最新通行證流水編號完整重新排序與對齊)
+// 初始車輛名冊 (VIP長官置頂自 001 依序往下排序，統一 3 位數流水號)
 export const INITIAL_PARKING_DATA = [
+  // === VIP 長官座車 (自 001 依序往下排序) ===
   {
     id: "p_1",
-    passNo: "01",
+    passNo: "001",
     plate: "CCN-1898",
     name: "鄭全欽 / 謝佳蓉",
     unit: "天泰營造",
@@ -20,7 +21,7 @@ export const INITIAL_PARKING_DATA = [
   },
   {
     id: "p_2",
-    passNo: "02",
+    passNo: "002",
     plate: "BTA-1150",
     name: "萬有為",
     unit: "萬有為建築事務所",
@@ -35,7 +36,7 @@ export const INITIAL_PARKING_DATA = [
   },
   {
     id: "p_4",
-    passNo: "04",
+    passNo: "003",
     plate: "BML-5916",
     name: "李健宏",
     unit: "天泰營造",
@@ -49,23 +50,8 @@ export const INITIAL_PARKING_DATA = [
     admin3: "OK"
   },
   {
-    id: "p_6",
-    passNo: "06",
-    plate: "0733-S6",
-    name: "張義和",
-    unit: "天泰營造",
-    subItem: "工程師 / 專案經理",
-    phone: "",
-    notes: "",
-    type: "regular",
-    status: "pass",
-    admin1: "OK",
-    admin2: "OK",
-    admin3: ""
-  },
-  {
     id: "p_7",
-    passNo: "07",
+    passNo: "004",
     plate: "1079-KS",
     name: "邢祖侗",
     unit: "天泰營造",
@@ -79,23 +65,8 @@ export const INITIAL_PARKING_DATA = [
     admin3: "OK"
   },
   {
-    id: "p_8",
-    passNo: "08",
-    plate: "BVU-3132",
-    name: "郭南君",
-    unit: "天泰營造",
-    subItem: "品管工程師",
-    phone: "",
-    notes: "",
-    type: "regular",
-    status: "pass",
-    admin1: "OK",
-    admin2: "OK",
-    admin3: ""
-  },
-  {
     id: "p_9",
-    passNo: "09",
+    passNo: "005",
     plate: "REC-6113",
     name: "張原吉",
     unit: "永瀚機電",
@@ -109,8 +80,55 @@ export const INITIAL_PARKING_DATA = [
     admin3: "OK"
   },
   {
+    id: "p_13",
+    passNo: "006",
+    plate: "7969-TW",
+    name: "邱炳榮",
+    unit: "永瀚機電",
+    subItem: "協理",
+    phone: "",
+    notes: "",
+    type: "vip",
+    status: "pass",
+    admin1: "OK",
+    admin2: "OK",
+    admin3: "OK"
+  },
+
+  // === 常駐工程車與專案同仁 ===
+  {
+    id: "p_6",
+    passNo: "007",
+    plate: "0733-S6",
+    name: "張義和",
+    unit: "天泰營造",
+    subItem: "工程師 / 專案經理",
+    phone: "",
+    notes: "",
+    type: "regular",
+    status: "pass",
+    admin1: "OK",
+    admin2: "OK",
+    admin3: ""
+  },
+  {
+    id: "p_8",
+    passNo: "008",
+    plate: "BVU-3132",
+    name: "郭南君",
+    unit: "天泰營造",
+    subItem: "品管工程師",
+    phone: "",
+    notes: "",
+    type: "regular",
+    status: "pass",
+    admin1: "OK",
+    admin2: "OK",
+    admin3: ""
+  },
+  {
     id: "p_10",
-    passNo: "10",
+    passNo: "009",
     plate: "ATE-6363",
     name: "劉順益",
     unit: "永瀚機電",
@@ -125,7 +143,7 @@ export const INITIAL_PARKING_DATA = [
   },
   {
     id: "p_11",
-    passNo: "11",
+    passNo: "010",
     plate: "BEN-9838",
     name: "林廷翰",
     unit: "永瀚機電",
@@ -140,7 +158,7 @@ export const INITIAL_PARKING_DATA = [
   },
   {
     id: "p_12",
-    passNo: "12",
+    passNo: "011",
     plate: "RFZ-8113",
     name: "李武麒",
     unit: "永瀚機電",
@@ -154,23 +172,25 @@ export const INITIAL_PARKING_DATA = [
     admin3: ""
   },
   {
-    id: "p_13",
-    passNo: "13",
-    plate: "7969-TW",
-    name: "邱炳榮",
-    unit: "永瀚機電",
-    subItem: "協理",
+    id: "p_16",
+    passNo: "012",
+    plate: "5T-3120",
+    name: "陸惟忠",
+    unit: "協力廠商",
+    subItem: "協力工程",
     phone: "",
     notes: "",
-    type: "vip",
+    type: "regular",
     status: "pass",
     admin1: "OK",
-    admin2: "OK",
-    admin3: "OK"
+    admin2: "",
+    admin3: ""
   },
+
+  // === 工程物料運補貨車 ===
   {
     id: "p_14",
-    passNo: "14",
+    passNo: "013",
     plate: "CCF-3089",
     name: "永瀚貨車 (1)",
     unit: "永瀚機電",
@@ -185,7 +205,7 @@ export const INITIAL_PARKING_DATA = [
   },
   {
     id: "p_15",
-    passNo: "15",
+    passNo: "014",
     plate: "0159-A6",
     name: "永瀚貨車 (2)",
     unit: "永瀚機電",
@@ -193,21 +213,6 @@ export const INITIAL_PARKING_DATA = [
     phone: "",
     notes: "",
     type: "temp",
-    status: "pass",
-    admin1: "OK",
-    admin2: "",
-    admin3: ""
-  },
-  {
-    id: "p_16",
-    passNo: "16",
-    plate: "5T-3120",
-    name: "陸惟忠",
-    unit: "協力廠商",
-    subItem: "協力工程",
-    phone: "",
-    notes: "",
-    type: "regular",
     status: "pass",
     admin1: "OK",
     admin2: "",

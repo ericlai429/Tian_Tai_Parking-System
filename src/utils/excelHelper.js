@@ -11,9 +11,9 @@ export function parseParkingExcel(arrayBuffer) {
   const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
   return rawRows.map((row, index) => {
-    // 找出流水號 / 通行證號
+    // 找出流水號 / 通行證號 (統一 3 位數 001, 002...)
     const rawNo = row['通行證編號'] || row['通行證'] || row['流水號'] || row['序號'] || row['No'] || row['NO'] || (index + 1);
-    const passNo = String(rawNo).padStart(2, '0');
+    const passNo = String(parseInt(String(rawNo).replace(/\D/g, ''), 10) || (index + 1)).padStart(3, '0');
 
     // 找出車牌
     const plate = String(

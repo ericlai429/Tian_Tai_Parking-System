@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Car, Search, CheckCircle2, XCircle, 
-  ExternalLink, Lock, Unlock, ArrowRight, Sparkles, Hash
+  ExternalLink, Lock, Unlock, ArrowRight, Sparkles, Hash,
+  Camera, Download, Trash2, Clock, Building2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -16,10 +17,172 @@ export default function DashboardView({
   const [quickPlate, setQuickPlate] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
 
+  // 本日車輛進場紀錄 (自 localStorage 讀取或初始化)
+  const [entryLogs, setEntryLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tian_tai_entry_logs');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
   // 標準化車牌號碼 (去空白與破折號)
   const cleanStr = (str) => (str || '').replace(/[\s-]/g, '').toUpperCase();
   // 提取純數字
   const extractDigits = (str) => (str || '').replace(/\D/g, '');
+
+  // 取得當前時間字串 (格式：YYYY/MM/DD HH:mm，不顯示秒)
+  const getEntryTimeString = () => {
+    const now = new Date();
+    const Y = now.getFullYear();
+    const M = String(now.getMonth() + 1).padStart(2, '0');
+    const D = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    return `${Y}/${M}/${D} ${hh}:${mm}`;
+  };
+
+  // 新增進場紀錄 (單位, 車牌, 時間[無秒])
+  const recordEntry = (vehicle) => {
+    const timeStr = getEntryTimeString();
+    const newLog = {
+      id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      plate: vehicle.plate,
+      name: vehicle.name || '車主',
+      unit: vehicle.unit || '外部單位',
+      subItem: vehicle.subItem || '',
+      passNo: vehicle.passNo || '',
+      type: vehicle.type || 'regular',
+      time: timeStr
+    };
+
+    setEntryLogs(prev => {
+      // 避免 1 分鐘內重複點擊同一台車刷入多筆
+      if (prev.length > 0 && prev[0].plate === newLog.plate && prev[0].time === newLog.time) {
+        return prev;
+      }
+      const updated = [newLog, ...prev];
+      localStorage.setItem('tian_tai_entry_logs', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // 清除進場紀錄 (限 Admin 或換班歸零)
+  const handleClearLogs = () => {
+    if (confirm('確定要清空本日進場紀錄嗎？')) {
+      setEntryLogs([]);
+      localStorage.removeItem('tian_tai_entry_logs');
+    }
+  };
+
+  // 一鍵存成圖片檔 (HTML5 Canvas 繪製高解析度圖片)
+  const handleExportImage = () => {
+    if (entryLogs.length === 0) {
+      alert('目前尚無進場紀錄，無法生成存證照片。');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const width = 900;
+    const rowHeight = 44;
+    const headerHeight = 160;
+    const padding = 30;
+    const height = headerHeight + (entryLogs.length * rowHeight) + padding + 60;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    // 1. 科技感深色漸層背景
+    const grad = ctx.createLinearGradient(0, 0, 0, height);
+    grad.addColorStop(0, '#0f172a');
+    grad.addColorStop(1, '#1e293b');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. 頂部飾條與標題
+    ctx.fillStyle = '#4f46e5';
+    ctx.fillRect(0, 0, width, 8);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 26px "Noto Sans TC", sans-serif';
+    ctx.fillText('天泰營造 工區大門－車輛進場時間留存表', padding, 52);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '15px "Noto Sans TC", sans-serif';
+    const now = new Date();
+    const exportTimeStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    ctx.fillText(`製表時間：${exportTimeStr}  |  執勤管理：天泰營造 & 飛龍保全  |  進場總計：${entryLogs.length} 車次`, padding, 84);
+
+    // 3. 欄位標題條 (單位, 車牌, 時間)
+    const tableTop = 115;
+    ctx.fillStyle = 'rgba(79, 70, 229, 0.25)';
+    ctx.fillRect(padding, tableTop, width - (padding * 2), 38);
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
+    ctx.strokeRect(padding, tableTop, width - (padding * 2), 38);
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = 'bold 15px "Noto Sans TC", sans-serif';
+    ctx.fillText('序號', padding + 15, tableTop + 25);
+    ctx.fillText('車牌號碼', padding + 85, tableTop + 25);
+    ctx.fillText('單位 / 人員', padding + 270, tableTop + 25);
+    ctx.fillText('進場時間 (年/月/日 時:分)', padding + 590, tableTop + 25);
+
+    // 4. 表格行渲染
+    let currentY = tableTop + 38;
+    entryLogs.forEach((item, index) => {
+      // 斑馬條紋背景
+      if (index % 2 === 1) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.fillRect(padding, currentY, width - (padding * 2), rowHeight);
+      }
+
+      // 底部分隔線
+      ctx.strokeStyle = 'rgba(51, 65, 85, 0.6)';
+      ctx.beginPath();
+      ctx.moveTo(padding, currentY + rowHeight);
+      ctx.lineTo(width - padding, currentY + rowHeight);
+      ctx.stroke();
+
+      // 序號
+      ctx.fillStyle = '#64748b';
+      ctx.font = '14px monospace';
+      ctx.fillText(String(index + 1).padStart(2, '0'), padding + 15, currentY + 28);
+
+      // 車牌號碼 (明顯加粗)
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 17px monospace';
+      const passTag = item.passNo ? `[#${item.passNo}] ` : '';
+      ctx.fillText(`${passTag}${item.plate}`, padding + 85, currentY + 28);
+
+      // 單位 / 人員
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '15px "Noto Sans TC", sans-serif';
+      const unitText = item.subItem ? `${item.unit} (${item.subItem})` : `${item.unit} - ${item.name}`;
+      ctx.fillText(unitText.slice(0, 22), padding + 270, currentY + 28);
+
+      // 進場時間 (精準到分，不顯示秒)
+      ctx.fillStyle = '#34d399';
+      ctx.font = 'bold 15px monospace';
+      ctx.fillText(item.time, padding + 590, currentY + 28);
+
+      currentY += rowHeight;
+    });
+
+    // 5. 底部相片水印簽署
+    ctx.fillStyle = '#64748b';
+    ctx.font = '13px "Noto Sans TC", sans-serif';
+    ctx.fillText('天泰營造現場智慧車輛放行管制系統存證相片  本資料真實有效', padding, height - 25);
+
+    // 6. 觸發下載 JPG/PNG
+    const fileDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `天泰車輛進場時間留存_${fileDate}.png`;
+    link.href = dataUrl;
+    link.click();
+  };
 
   // 即時 3 碼 / 流水號 / 模糊過濾候選車輛
   const candidates = useMemo(() => {
@@ -54,10 +217,11 @@ export default function DashboardView({
     }).slice(0, 10);
   }, [parkingList, quickPlate]);
 
-  // 選中或確認驗證
+  // 選中或確認驗證 (自動記錄進入車子時間)
   const handleSelectVehicle = (vehicle) => {
     setSelectedVehicle(vehicle);
     setQuickPlate(vehicle.plate);
+    recordEntry(vehicle); // 自動記入進場時間
     if (vehicle.status === 'pass') {
       confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
     }
@@ -76,13 +240,15 @@ export default function DashboardView({
     if (exact) {
       handleSelectVehicle(exact);
     } else {
-      setSelectedVehicle({
+      const visitor = {
         plate: quickPlate.trim().toUpperCase(),
         status: 'not_found',
         name: '未註冊車輛',
         unit: '外部訪客',
         notes: '此車輛未在名冊中，警衛請依標準訪客程序登記換證。'
-      });
+      };
+      setSelectedVehicle(visitor);
+      recordEntry(visitor); // 訪客進入亦同步記錄時間
     }
   };
 
@@ -233,6 +399,82 @@ export default function DashboardView({
                 </span>
               </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* 2. 【本日進場時間留存】單位、車牌、時間(無秒) & 一鍵存圖片留存 */}
+      <div className="p-4 rounded-xl border space-y-3 shadow-md"
+           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+        <div className="flex items-center justify-between gap-2 border-b pb-2.5"
+             style={{ borderColor: 'var(--card-border)' }}>
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-indigo-400" />
+            <h2 className="text-base font-black tracking-tight" style={{ color: 'var(--text)' }}>
+              本日進場時間留存
+            </h2>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              已記 {entryLogs.length} 車
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleExportImage}
+              disabled={entryLogs.length === 0}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-40"
+              title="匯出本日進場時間相片檔留存"
+            >
+              <Camera className="w-3.5 h-3.5 text-indigo-200" />
+              <span>一鍵存相片</span>
+            </button>
+
+            {entryLogs.length > 0 && (
+              <button
+                onClick={handleClearLogs}
+                className="p-1.5 rounded-lg border text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                style={{ borderColor: 'var(--card-border)' }}
+                title="清空紀錄"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 進場紀錄清單列表 (單位, 車牌, 時間無秒) */}
+        {entryLogs.length === 0 ? (
+          <div className="py-6 text-center text-xs text-slate-400">
+            尚無車輛進場紀錄。於上方核對通過後，將自動記錄時間並供存檔。
+          </div>
+        ) : (
+          <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+            {entryLogs.map((log, idx) => (
+              <div
+                key={log.id}
+                className="p-2.5 rounded-lg border flex items-center justify-between gap-2 text-xs transition-all"
+                style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)' }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-mono text-[11px] font-bold text-slate-400 w-5 text-center shrink-0">
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+                  <span className="font-mono font-black text-sm tracking-wide text-sky-400 shrink-0">
+                    {log.passNo ? `[#${log.passNo}] ` : ''}{log.plate}
+                  </span>
+                  <span className="truncate font-semibold" style={{ color: 'var(--text)' }}>
+                    {log.unit}
+                    <span className="text-[11px] opacity-75 font-normal ml-1">
+                      ({log.subItem || log.name})
+                    </span>
+                  </span>
+                </div>
+
+                <div className="font-mono text-[11px] font-bold text-emerald-400 shrink-0 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  {log.time}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
