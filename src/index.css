@@ -110,6 +110,17 @@ body {
   }
 }
 
+@keyframes pulse-glow-amber {
+  0%, 100% { 
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.35), inset 0 0 8px rgba(245, 158, 11, 0.15); 
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 22px rgba(245, 158, 11, 0.85), inset 0 0 14px rgba(245, 158, 11, 0.3); 
+    border-color: rgba(245, 158, 11, 0.9);
+  }
+}
+
 .glow-emerald { animation: pulse-glow-emerald 2s infinite ease-in-out; }
 .glow-rose { animation: pulse-glow-rose 2s infinite ease-in-out; }
 .glow-amber { animation: pulse-glow-amber 2s infinite ease-in-out; }

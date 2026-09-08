@@ -230,6 +230,21 @@ export default function App() {
         color: 'var(--text-dim)' 
       }}>
         <div className="w-full px-3 space-y-3">
+          {/* LINE 瀏覽器下載存檔提示 (黃色呼吸光背景效果) */}
+          <div className="p-3 sm:p-3.5 rounded-xl border text-[13px] leading-relaxed glow-amber text-left sm:text-center transition-all"
+               style={{ 
+                 backgroundColor: 'rgba(245, 158, 11, 0.1)', 
+                 borderColor: 'rgba(245, 158, 11, 0.6)',
+                 color: 'var(--text)'
+               }}>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-base shrink-0 animate-pulse">⚠️</span>
+              <div className="font-bold text-amber-300 text-xs sm:text-[13px] tracking-wide text-center">
+                <span>LINE 無法存檔？點右上「…」➔「在瀏覽器中開啟」</span>
+              </div>
+            </div>
+          </div>
+
           {/* 手機 PWA 安裝獨立網格 (字體 14px，淡藍色呼吸燈 High_light 顯示) */}
           <div className="p-3.5 rounded-xl border text-[13px] leading-relaxed glow-cyan text-left sm:text-center transition-all"
                style={{ 

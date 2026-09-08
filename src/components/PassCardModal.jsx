@@ -430,7 +430,7 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
         URL.revokeObjectURL(blobUrl);
       }, 1500);
 
-      setPdfSuccessMessage(`✅ 已成功生成並下載：${filename}！若使用 LINE 內建瀏覽器無法保存，請點擊右上角「...」選擇『在瀏覽器中開啟』。`);
+      setPdfSuccessMessage(`✅ 已成功生成並下載：${filename}！LINE 無法存檔？點右上「…」➔「在瀏覽器中開啟」`);
       setTimeout(() => {
         setPdfSuccessMessage('');
       }, 10000);
@@ -482,7 +482,7 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                   (使用電腦觀看以達最佳效果)
                 </span>
               </h2>
-              <p className="text-[11px] text-slate-400 truncate hidden xs:block">
+              <p className="text-[11px] text-slate-400 truncate hidden sm:block">
                 A4 直式每頁 4 張 · 雙模式預覽 · 純前端 PDF 高畫質匯出
               </p>
             </div>
@@ -676,7 +676,7 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
           )}
 
           {previewMode === 'card' && (
-            <span className="text-[11px] text-slate-400 hidden xs:inline">
+            <span className="text-[11px] text-slate-400 hidden sm:inline">
               已排入 {cardDataList.length} 張卡片
             </span>
           )}
