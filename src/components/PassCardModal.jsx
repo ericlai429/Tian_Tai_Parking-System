@@ -353,15 +353,15 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                               </div>
                               {/* 中間大徽章區 */}
                               <div className="p-3 my-auto text-center space-y-2.5">
-                                <div className="inline-block px-4 py-1.5 rounded-lg bg-indigo-50 border-2 border-indigo-200 text-indigo-950 font-black text-sm">
+                                <div className="inline-block px-4 py-1.5 rounded-lg bg-indigo-50 border-2 border-indigo-200 text-indigo-950 font-black text-sm whitespace-nowrap">
                                   {card.unit}
                                 </div>
                                 <div>
-                                  <div className="font-mono font-black text-3xl sm:text-4xl tracking-widest text-indigo-950 bg-slate-100 py-2 rounded-xl border-2 border-dashed border-indigo-300">
+                                  <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest text-indigo-950 bg-slate-100 py-2 px-2 rounded-xl border-2 border-dashed border-indigo-300 whitespace-nowrap inline-block max-w-full">
                                     {card.plate}
                                   </div>
                                 </div>
-                                <div className="text-base font-black text-slate-900">
+                                <div className="text-base font-black text-slate-900 whitespace-nowrap">
                                   {card.name} <span className="text-indigo-700 text-sm">【{card.subItem}】</span>
                                 </div>
                               </div>
@@ -393,18 +393,18 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                                     <div className="font-black text-[15px] text-slate-950 whitespace-nowrap">天泰營造股份有限公司</div>
                                   </div>
                                   <div className="text-right">
-                                    <span className="bg-slate-900 text-amber-400 font-mono font-black text-sm px-2.5 py-1 rounded">
+                                    <span className="bg-slate-900 text-amber-400 font-mono font-black text-sm px-2.5 py-1 rounded whitespace-nowrap">
                                       #{card.passNo}
                                     </span>
                                   </div>
                                 </div>
-                                <div className="text-center font-black text-xs bg-slate-100 py-1 rounded border border-slate-300">
+                                <div className="text-center font-black text-xs bg-slate-100 py-1 rounded border border-slate-300 whitespace-nowrap">
                                   三軍總醫院新建工程 · 車輛准入許可證
                                 </div>
                               </div>
                               {/* 核心黑框大車號 */}
                               <div className="px-3 my-auto text-center space-y-2">
-                                <div className="bg-slate-950 text-amber-400 font-mono font-black text-3xl sm:text-4xl py-2.5 rounded-lg tracking-widest shadow-inner">
+                                <div className="bg-slate-950 text-amber-400 font-mono font-black text-2xl sm:text-3xl py-2 px-2 rounded-lg tracking-widest shadow-inner whitespace-nowrap inline-block max-w-full">
                                   {card.plate}
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 text-left pt-1">
@@ -437,16 +437,16 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                               <div className="absolute top-0 left-0 right-0 h-2 bg-emerald-600"></div>
                               <div className="flex items-center justify-between border-b-2 border-emerald-500 pb-1.5 mt-0.5">
                                 <span className="font-black text-base text-emerald-950 whitespace-nowrap">天泰營造</span>
-                                <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">工區停車証</span>
-                                <span className="font-mono font-black text-base text-emerald-800">#{card.passNo}</span>
+                                <span className="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded whitespace-nowrap">工區停車証</span>
+                                <span className="font-mono font-black text-base text-emerald-800 whitespace-nowrap">#{card.passNo}</span>
                               </div>
-                              {/* 超特大車牌號碼 */}
+                              {/* 超特大車牌號碼 (強制 whitespace-nowrap 絕對不折行) */}
                               <div className="my-auto py-2 text-center space-y-2">
-                                <div className="text-[11px] font-bold text-slate-500 tracking-wider">PERMITTED VEHICLE</div>
-                                <div className="font-mono font-black text-4xl sm:text-5xl tracking-widest text-emerald-950 bg-emerald-50 py-3 rounded-2xl border-3 border-emerald-600 shadow-md">
+                                <div className="text-[11px] font-bold text-slate-500 tracking-wider whitespace-nowrap">PERMITTED VEHICLE</div>
+                                <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest text-emerald-950 bg-emerald-50 py-2.5 px-2 rounded-xl border-3 border-emerald-600 shadow-md whitespace-nowrap inline-block max-w-full">
                                   {card.plate}
                                 </div>
-                                <div className="text-lg font-black text-slate-900 pt-1">
+                                <div className="text-base sm:text-lg font-black text-slate-900 pt-1 whitespace-nowrap">
                                   {card.unit} · {card.name} <span className="text-sm font-bold text-emerald-700">({card.subItem})</span>
                                 </div>
                               </div>
