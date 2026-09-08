@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Cloud, RefreshCw, CheckCircle2, AlertCircle, 
   ExternalLink, Save, Database, Shield, Lock, FileSpreadsheet 
@@ -12,7 +12,9 @@ export default function CloudSyncModal({
   onSyncParking, 
   onSyncSchedule, 
   cloudStatus, 
-  setCloudStatus 
+  setCloudStatus,
+  isAdmin,
+  onRequireAdmin
 }) {
   const [parkingUrl, setParkingUrl] = useState(cloudConfig.parkingUrl);
   const [scheduleFolderUrl, setScheduleFolderUrl] = useState(cloudConfig.scheduleFolderUrl || '');
@@ -22,6 +24,10 @@ export default function CloudSyncModal({
   // 測試並儲存雲端停車試算表連線
   const handleTestAndSave = async (e) => {
     e.preventDefault();
+    if (!isAdmin) {
+      onRequireAdmin();
+      return;
+    }
     setIsTesting(true);
     setTestMessage(null);
 

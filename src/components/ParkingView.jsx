@@ -1,9 +1,9 @@
-﻿import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { 
   Car, Search, CheckCircle2, XCircle, AlertCircle, 
   Upload, Download, Plus, Trash2, Shield, Crown, 
   Phone, User, Building, FileSpreadsheet, Sparkles, Filter,
-  Cloud, RefreshCw, ExternalLink 
+  Cloud, RefreshCw, ExternalLink, Lock, Unlock 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { parseParkingExcel, exportParkingToExcel } from '../utils/excelHelper';
@@ -14,7 +14,9 @@ export default function ParkingView({
   setParkingList, 
   cloudConfig, 
   onOpenCloudSync,
-  setCloudStatus 
+  setCloudStatus,
+  isAdmin,
+  onRequireAdmin
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all'); // all, vip, regular, temp
@@ -34,17 +36,14 @@ export default function ParkingView({
 
   const fileInputRef = useRef(null);
 
-  // 標準化車牌號碼 (去掉空白與破折號以利模糊比對)
-  const normalizePlate = (str) => {
-    return (str || '').replace(/[\s-]/g, '').toUpperCase();
-  };
+  // 標準化車牌號碼 (去空白與破折號)
+  const normalizePlate = (str) => (str || '').replace(/[\s-]/g, '').toUpperCase();
 
   // 即時驗證搜尋車牌
   const handleVerifyPlate = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     const cleanTarget = normalizePlate(searchQuery);
-
     const found = parkingList.find(v => normalizePlate(v.plate) === cleanTarget);
 
     if (found) {
@@ -56,10 +55,10 @@ export default function ParkingView({
       setVerifiedVehicle({
         plate: searchQuery.trim().toUpperCase(),
         name: '訪客 / 未登記車輛',
-        unit: '無單位資料',
-        phone: '無',
+        unit: '外部單位',
+        phone: '',
         subItem: '臨時抵達',
-        notes: '此車輛不在目前資料庫名冊內。警衛人員請依 SOP 登記換證。',
+        notes: '此車輛不在名冊中。請警衛人員依訪客SOP登記換證。',
         type: 'temp',
         status: 'denied',
         isUnregistered: true
@@ -67,7 +66,7 @@ export default function ParkingView({
     }
   };
 
-  // 從 Google 雲端試算表直接一鍵拉取最新車冊
+  // 從 Google 雲端試算表拉取最新車冊
   const handleSyncCloudSheet = async () => {
     setIsSyncing(true);
     try {
@@ -87,8 +86,13 @@ export default function ParkingView({
     }
   };
 
-  // 處理匯入使用者的新 Excel 檔
+  // 處理匯入使用者的新 Excel 檔 (需要 Admin 權限)
   const handleFileUpload = (e) => {
+    if (!isAdmin) {
+      onRequireAdmin();
+      e.target.value = '';
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -114,9 +118,13 @@ export default function ParkingView({
     e.target.value = '';
   };
 
-  // 手動新增車輛
+  // 手動新增車輛 (需要 Admin 權限)
   const handleAddVehicle = (e) => {
     e.preventDefault();
+    if (!isAdmin) {
+      onRequireAdmin();
+      return;
+    }
     if (!newVehicle.plate.trim()) {
       alert('請填寫車牌號碼！');
       return;
@@ -125,7 +133,7 @@ export default function ParkingView({
       id: `p_${Date.now()}`,
       plate: newVehicle.plate.trim().toUpperCase(),
       name: newVehicle.name.trim() || '未具名',
-      unit: newVehicle.unit.trim() || '工務所',
+      unit: newVehicle.unit.trim() || '天泰營造',
       phone: newVehicle.phone.trim(),
       subItem: newVehicle.subItem.trim(),
       notes: newVehicle.notes.trim(),
@@ -153,8 +161,12 @@ export default function ParkingView({
     alert(`車牌 ${item.plate} 已成功加入名冊！`);
   };
 
-  // 刪除車輛
+  // 刪除車輛 (需要 Admin 權限)
   const handleDelete = (id) => {
+    if (!isAdmin) {
+      onRequireAdmin();
+      return;
+    }
     if (confirm('確定要自名冊中移除此車輛嗎？')) {
       const updated = parkingList.filter(p => p.id !== id);
       setParkingList(updated);
@@ -165,8 +177,12 @@ export default function ParkingView({
     }
   };
 
-  // 切換車輛核可狀態 (Pass / Denied)
+  // 切換車輛核可狀態 (Pass / Denied) (需要 Admin 權限)
   const toggleStatus = (id) => {
+    if (!isAdmin) {
+      onRequireAdmin();
+      return;
+    }
     const updated = parkingList.map(p => {
       if (p.id === id) {
         const nextStatus = p.status === 'pass' ? 'denied' : 'pass';
@@ -208,14 +224,19 @@ export default function ParkingView({
                 智慧停車通行管制系統
               </span>
               <span className="text-xs font-semibold text-slate-400">
-                名冊資料：{parkingList.length} 輛車
+                名冊總計：{parkingList.length} 輛車
               </span>
+              {isAdmin && (
+                <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  👑 後台管理模式已啟用 (t1898)
+                </span>
+              )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-black mt-2 tracking-tight" style={{ color: 'var(--text)' }}>
               車輛放行查驗與名冊中心
             </h1>
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-              長官座車、常駐工程車與廠商臨時出入放行查核。支援即時車牌核對與 Excel / 雲端試算表雙向同步。
+              長官座車、常駐工程車與廠商出入放行查核。支援即時車牌比對與 Google 試算表同步。
             </p>
           </div>
 
@@ -240,9 +261,12 @@ export default function ParkingView({
               <span>{isSyncing ? '同步中...' : '雲端同步名冊'}</span>
             </button>
 
-            {/* 匯入 Excel 按鈕 */}
+            {/* 匯入 Excel 按鈕 (需要 Admin 權限) */}
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                if (isAdmin) fileInputRef.current?.click();
+                else onRequireAdmin();
+              }}
               className="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 flex items-center gap-2 transition-all active:scale-95"
             >
               <Upload className="w-4 h-4" />
@@ -260,9 +284,12 @@ export default function ParkingView({
               <span>匯出 Excel 清單</span>
             </button>
 
-            {/* 手動新增按鈕 */}
+            {/* 手動新增按鈕 (需要 Admin 權限) */}
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                if (isAdmin) setShowAddModal(true);
+                else onRequireAdmin();
+              }}
               className="px-4 py-2.5 rounded-xl text-xs font-bold border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 flex items-center gap-1.5 transition-all active:scale-95"
             >
               <Plus className="w-4 h-4" />
@@ -283,7 +310,7 @@ export default function ParkingView({
             <div className="font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
               <span>已連接雲端試算表：</span>
               <span className="text-emerald-400 font-mono">天泰營造 工地工區大門－車輛管制</span>
-              <span className="px-2 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-bold">由 Admin 編輯</span>
+              <span className="px-2 py-0.5 rounded text-[10px] bg-indigo-500/20 text-indigo-300 font-bold">由 Admin 編輯 (密碼: t1898)</span>
             </div>
             <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
               管理員可隨時在 Google 試算表新增、修改車號或職稱，系統支援一鍵同步或離線放行。
@@ -293,7 +320,7 @@ export default function ParkingView({
 
         <div className="flex items-center gap-2 shrink-0">
           <a
-            href={cloudConfig?.parkingUrl || "https://docs.google.com/spreadsheets/d/1QJkm5rNHtyQN84awlHWoz4n9jE8NFogk4I4k4x3FPok/edit?gid=239543721#gid=239543721"}
+            href={cloudConfig?.parkingUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20 flex items-center gap-1.5 transition-all"
@@ -313,7 +340,7 @@ export default function ParkingView({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="輸入車牌號碼 (例：BVU-3132、1079-KS 或 0733-S6)..."
+              placeholder="輸入車牌號碼 (例：1079-KS 或 BVU-3132)..."
               className="w-full pl-12 pr-4 py-3.5 rounded-xl border text-lg sm:text-xl font-mono font-black tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500"
               style={{ 
                 backgroundColor: 'var(--card-hover)', 
@@ -331,7 +358,7 @@ export default function ParkingView({
           </button>
         </form>
 
-        {/* 查驗放行結果卡 (大螢幕與高反光工地環境最佳化) */}
+        {/* 查驗放行結果卡 */}
         {verifiedVehicle && (
           <div className={`p-6 rounded-2xl border transition-all ${
             verifiedVehicle.status === 'pass'
@@ -362,12 +389,6 @@ export default function ParkingView({
                       <span>職稱：{verifiedVehicle.subItem}</span>
                     </>
                   )}
-                  {verifiedVehicle.phone && (
-                    <>
-                      <span>|</span>
-                      <span>電話：{verifiedVehicle.phone}</span>
-                    </>
-                  )}
                 </div>
 
                 {verifiedVehicle.notes && (
@@ -395,31 +416,13 @@ export default function ParkingView({
                     </>
                   )}
                 </div>
-
-                {verifiedVehicle.isUnregistered && (
-                  <button
-                    onClick={() => {
-                      setNewVehicle({
-                        ...newVehicle,
-                        plate: verifiedVehicle.plate,
-                        name: '臨時訪客',
-                        unit: '外包/外部',
-                        status: 'pass'
-                      });
-                      setShowAddModal(true);
-                    }}
-                    className="text-xs font-bold text-indigo-400 hover:underline"
-                  >
-                    + 將此車牌加入通行名冊
-                  </button>
-                )}
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* 車輛名冊過濾與清單 */}
+      {/* 車輛名冊表格 */}
       <div className="p-6 rounded-2xl border space-y-4" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -442,7 +445,7 @@ export default function ParkingView({
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filterType === 'vip' ? 'bg-indigo-600 text-white' : ''}`}
               style={{ color: filterType === 'vip' ? '#ffffff' : 'var(--text-muted)' }}
             >
-              👑 長官/VIP
+              👑 VIP長官
             </button>
             <button
               onClick={() => setFilterType('regular')}
@@ -473,7 +476,9 @@ export default function ParkingView({
                 <th className="p-3 font-bold" style={{ color: 'var(--text)' }}>備註</th>
                 <th className="p-3 font-bold" style={{ color: 'var(--text)' }}>類別</th>
                 <th className="p-3 font-bold text-center" style={{ color: 'var(--text)' }}>通行狀態</th>
-                <th className="p-3 font-bold text-right" style={{ color: 'var(--text)' }}>操作</th>
+                {isAdmin && (
+                  <th className="p-3 font-bold text-right" style={{ color: 'var(--text)' }}>管理操作</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -511,47 +516,39 @@ export default function ParkingView({
                           ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30' 
                           : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
                       }`}
+                      title={isAdmin ? "點擊切換通行狀態" : "需要管理員權限 (t1898)"}
                     >
                       {item.status === 'pass' ? '✔ 核准放行' : '✖ 暫停通行'}
                     </button>
                   </td>
-                  <td className="p-3 text-right">
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"
-                      title="自名冊移除"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+                  {isAdmin && (
+                    <td className="p-3 text-right">
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"
+                        title="自名冊移除"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
-
-              {filteredList.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="p-8 text-center" style={{ color: 'var(--text-muted)' }}>
-                    <div className="space-y-2">
-                      <p>查無相符的車輛資料。</p>
-                      <p className="text-xs">請點選上方「雲端同步名冊」或「手動新增車輛」。</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* 手動新增車輛彈出視窗 */}
+      {/* 手動新增車輛彈出視窗 (限 Admin) */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="w-full max-w-md p-6 rounded-2xl border space-y-4 animate-scaleUp"
                style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', boxShadow: 'var(--shadow)' }}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold" style={{ color: 'var(--text)' }}>
-                手動登記新車輛
+                手動登記新車輛 (Admin 模式)
               </h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-200">
+              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-200 font-bold">
                 ✕
               </button>
             </div>

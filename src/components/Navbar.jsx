@@ -1,10 +1,18 @@
-﻿import React from 'react';
+import React from 'react';
 import { 
   Shield, Calendar, Car, Cloud, Moon, Sun, 
-  Activity, RefreshCw, Layers, CheckCircle2 
+  Activity, RefreshCw, Layers, Lock, Unlock, Crown 
 } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, isDarkMode, setIsDarkMode, cloudStatus }) {
+export default function Navbar({ 
+  activeTab, 
+  setActiveTab, 
+  isDarkMode, 
+  setIsDarkMode, 
+  cloudStatus,
+  isAdmin,
+  onAdminToggle
+}) {
   const tabs = [
     { id: 'dashboard', label: '總覽戰情室', icon: Activity },
     { id: 'schedule', label: '天泰三總班表', icon: Calendar, badge: '115.9' },
@@ -72,11 +80,26 @@ export default function Navbar({ activeTab, setActiveTab, isDarkMode, setIsDarkM
           })}
         </nav>
 
-        {/* 功能控制區：雲端燈號與主題切換 */}
-        <div className="flex items-center space-x-3">
+        {/* 功能控制區：Admin 身分、雲端燈號與主題切換 */}
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* 後台管理員登入切換鈕 (密碼: t1898) */}
+          <button
+            onClick={onAdminToggle}
+            className={`flex items-center space-x-1.5 text-xs px-3 py-1.5 rounded-lg border font-bold transition-all ${
+              isAdmin 
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm' 
+                : 'text-slate-400 border-slate-700 hover:bg-slate-800/30'
+            }`}
+            title={isAdmin ? "目前已登入 Admin (點擊登出)" : "點擊輸入密碼登入後台"}
+          >
+            {isAdmin ? <Crown className="w-3.5 h-3.5 text-amber-400" /> : <Lock className="w-3.5 h-3.5 text-slate-400" />}
+            <span>{isAdmin ? 'Admin 已解鎖' : '後台管理'}</span>
+          </button>
+
+          {/* 雲端狀態小標籤 */}
           <button
             onClick={() => setActiveTab('cloud')}
-            className="flex items-center space-x-1.5 text-xs px-3 py-1.5 rounded-lg border transition-all"
+            className="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-all"
             style={{ 
               borderColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.4)' : 'var(--card-border)',
               backgroundColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
@@ -85,9 +108,10 @@ export default function Navbar({ activeTab, setActiveTab, isDarkMode, setIsDarkM
             title="雲端資料庫狀態"
           >
             <span className={`w-2 h-2 rounded-full ${cloudStatus.connected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
-            <span className="font-semibold">{cloudStatus.connected ? '雲端連線' : '本地暫存'}</span>
+            <span className="font-semibold hidden sm:inline">{cloudStatus.connected ? '雲端連線' : '本地'}</span>
           </button>
 
+          {/* 主題切換 */}
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className="p-2 rounded-xl border transition-all hover:scale-105 active:scale-95"
