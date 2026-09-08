@@ -237,9 +237,22 @@ export default function DashboardView({
     link.click();
   };
 
-  // 即時 2~3 碼 / 模糊過濾候選車輛 (限制：只輸入 1 碼時不動作，防範資料探測蒐集)
+  const [debouncedPlate, setDebouncedPlate] = useState('');
+
+  // 避免資料連續狂按狂打輸入，每碼車碼相隔 50ms 防抖過濾，避免系統崩潰
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedPlate(quickPlate);
+    }, 50);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [quickPlate]);
+
+  // 即時 2~3 碼 / 模糊過濾候選車輛 (限制：只輸入 1 碼時不動作，防範資料探測蒐集；透過 50ms 防抖保護系統)
   const candidates = useMemo(() => {
-    const q = quickPlate.trim();
+    const q = debouncedPlate.trim();
     // 嚴格限制：小於 2 碼不觸發過濾，防止單一字元暴力枚舉整批名冊
     if (!q || q.length < 2) return [];
     
@@ -553,12 +566,17 @@ export default function DashboardView({
 
             {entryLogs.length > 0 && (
               <button
-                onClick={() => requestDeleteLog('all')}
-                className="p-1.5 rounded-lg border text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  requestDeleteLog('all');
+                }}
+                className="p-2 rounded-lg border text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-all cursor-pointer active:scale-90 touch-manipulation"
                 style={{ borderColor: 'var(--card-border)' }}
                 title="清空本日所有紀錄 (需管理員密碼)"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4 pointer-events-none" />
               </button>
             )}
           </div>
@@ -612,11 +630,16 @@ export default function DashboardView({
                     {log.time}
                   </div>
                   <button
-                    onClick={() => requestDeleteLog(log.id)}
-                    className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-all"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      requestDeleteLog(log.id);
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition-all cursor-pointer active:scale-90 touch-manipulation"
                     title="刪除此筆紀錄 (需管理員密碼)"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-3.5 h-3.5 pointer-events-none" />
                   </button>
                 </div>
               </div>
