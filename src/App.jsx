@@ -179,17 +179,17 @@ export default function App() {
         color: 'var(--text-dim)' 
       }}>
         <div className="w-full px-3 space-y-3">
-          {/* 手機 PWA 安裝獨立網格 (字體 14px) */}
-          <div className="p-3.5 rounded-xl border text-[13px] leading-relaxed shadow-sm text-left sm:text-center"
+          {/* 手機 PWA 安裝獨立網格 (字體 14px，淡藍色呼吸燈 High_light 顯示) */}
+          <div className="p-3.5 rounded-xl border text-[13px] leading-relaxed glow-cyan text-left sm:text-center transition-all"
                style={{ 
-                 backgroundColor: 'var(--card-hover)', 
-                 borderColor: 'var(--card-border)',
+                 backgroundColor: 'rgba(14, 165, 233, 0.08)', 
+                 borderColor: 'rgba(56, 189, 248, 0.6)',
                  color: 'var(--text)'
                }}>
             <div className="flex items-start gap-2">
-              <span className="text-base shrink-0">📱</span>
+              <span className="text-base shrink-0 animate-bounce">📱</span>
               <div>
-                <span className="font-bold text-indigo-400">iPhone (Safari)：</span>
+                <span className="font-bold text-sky-400">iPhone (Safari)：</span>
                 <span>以 Safari 開啟上方連結 ➔ 點擊底部「分享」按鈕 ➔ 選擇「加入主畫面」即可在桌面生成 App 圖示，點開即為全螢幕獨立 App！</span>
               </div>
             </div>
