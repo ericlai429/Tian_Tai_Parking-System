@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, ClipboardList, Clock, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function ScheduleView({ scheduleData, setScheduleData }) {
   // 週末例假日判斷 (2026/09/01 為星期二)
@@ -141,6 +141,113 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* 2. 保全人員辦理事項表 (精簡化但完整保留原意，直觀時段條列卡片) */}
+      <div className="p-4 rounded-xl border space-y-3.5 shadow-md"
+           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+        
+        <div className="flex items-center justify-between border-b pb-2.5"
+             style={{ borderColor: 'var(--card-border)' }}>
+          <div className="flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-base font-black tracking-tight" style={{ color: 'var(--text)' }}>
+              保全人員辦理事項表
+            </h3>
+          </div>
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
+            勤務常規守則
+          </span>
+        </div>
+
+        <div className="space-y-2.5 text-xs">
+          {/* 07:00 上班開門 */}
+          <div className="p-3 rounded-xl border space-y-1.5 transition-all"
+               style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)' }}>
+            <div className="flex items-center justify-between">
+              <span className="font-mono font-black text-indigo-400 text-xs px-2 py-0.5 rounded bg-indigo-500/15 border border-indigo-500/30">
+                07:00 上班開門
+              </span>
+              <span className="text-[11px] text-amber-300 font-bold">2、5號門全天不開放</span>
+            </div>
+            <ul className="space-y-1 pl-1 text-[12px] leading-relaxed" style={{ color: 'var(--text)' }}>
+              <li className="flex items-start gap-1.5">
+                <span className="text-indigo-400 font-bold">•</span>
+                <span>群組通報上班打卡。</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-indigo-400 font-bold">•</span>
+                <span><strong>1號大門</strong>：全開啟用（09:00 後關閉管制）。</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-indigo-400 font-bold">•</span>
+                <span><strong>3號小門</strong>：打開門栓（09:00 後拴上閉合）。</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-indigo-400 font-bold">•</span>
+                <span><strong>4號小門</strong>：打開門栓（18:00 後拴上閉合）。</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* 08:00 ~ 17:00 日間管制與清運簽認 */}
+          <div className="p-3 rounded-xl border space-y-1.5 transition-all"
+               style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)' }}>
+            <div className="flex items-center justify-between">
+              <span className="font-mono font-black text-emerald-400 text-xs px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30">
+                08:00 ~ 17:00 日間勤務管制
+              </span>
+              <span className="text-[11px] text-emerald-300 font-bold">工區出入把關</span>
+            </div>
+            <ul className="space-y-1 pl-1 text-[12px] leading-relaxed" style={{ color: 'var(--text)' }}>
+              <li className="flex items-start gap-1.5">
+                <span className="text-emerald-400 font-bold">•</span>
+                <span><strong>1門人車登記</strong>：登記進出場人車，無線電呼叫工務所確認。</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-emerald-400 font-bold">•</span>
+                <span><strong>大門交管</strong>：引導進出場動線，協助沖洗出入車輛輪胎泥沙。</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-emerald-400 font-bold">•</span>
+                <span><strong>清運簽認</strong>：每週垃圾子車、流動廁所清運確實簽收確認。</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* 18:00 巡檢關閉與下班通報 */}
+          <div className="p-3 rounded-xl border space-y-1.5 transition-all"
+               style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)' }}>
+            <div className="flex items-center justify-between">
+              <span className="font-mono font-black text-rose-400 text-xs px-2 py-0.5 rounded bg-rose-500/15 border border-rose-500/30">
+                18:00 巡檢與下班通報
+              </span>
+              <span className="text-[11px] text-rose-300 font-bold">巡檢鎖固</span>
+            </div>
+            <ul className="space-y-1 pl-1 text-[12px] leading-relaxed" style={{ color: 'var(--text)' }}>
+              <li className="flex items-start gap-1.5">
+                <span className="text-rose-400 font-bold">•</span>
+                <span>確認工區內部已無人車後，<strong>1號大門上鎖</strong>。</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-rose-400 font-bold">•</span>
+                <span>巡檢 <strong>1~5 號門</strong>皆已全數妥善關閉。</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-rose-400 font-bold">•</span>
+                <span>巡查並確認<strong>男廁抽風扇</strong>已關閉電源。</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-rose-400 font-bold">•</span>
+                <span>全數確認無誤後，於<strong>工作群組通報完成下班</strong>。</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="pt-1 text-[11px] text-center" style={{ color: 'var(--text-muted)' }}>
+          ※ 本表各項工作配合現場施工進度隨時機動修正調整。
         </div>
       </div>
     </div>
