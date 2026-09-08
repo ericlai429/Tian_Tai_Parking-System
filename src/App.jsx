@@ -93,26 +93,29 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col transition-colors duration-300">
-      {/* 導覽列 */}
-      <Navbar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        isDarkMode={isDarkMode} 
-        setIsDarkMode={setIsDarkMode}
-        cloudStatus={cloudStatus}
-        isAdmin={isAdmin}
-        onAdminToggle={() => {
-          if (isAdmin) {
-            handleAdminLogout();
-          } else {
-            setShowAdminModal(true);
-          }
-        }}
-      />
+    <div className="min-h-screen flex flex-col items-center justify-start transition-colors duration-300" style={{ backgroundColor: 'var(--bg)' }}>
+      {/* 限制本機與各環境為 iPhone 13 Pro 規格尺寸 (390px ~ 430px) 置中，避免在大螢幕過度放大 */}
+      <div className="w-full max-w-[430px] min-h-screen flex flex-col border-x shadow-2xl transition-all"
+           style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--bg)' }}>
+        {/* 導覽列 */}
+        <Navbar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          isDarkMode={isDarkMode} 
+          setIsDarkMode={setIsDarkMode}
+          cloudStatus={cloudStatus}
+          isAdmin={isAdmin}
+          onAdminToggle={() => {
+            if (isAdmin) {
+              handleAdminLogout();
+            } else {
+              setShowAdminModal(true);
+            }
+          }}
+        />
 
-      {/* 主工作區塊 */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+        {/* 主工作區塊 */}
+        <main className="flex-1 w-full px-3 py-4 space-y-4">
         {activeTab === 'dashboard' && (
           <DashboardView 
             scheduleData={scheduleData}
@@ -169,27 +172,31 @@ export default function App() {
         )}
       </main>
 
-      {/* 頁尾資訊 */}
-      <footer className="mt-auto border-t py-8 text-center transition-colors" style={{ 
+      {/* 頁尾資訊 (下方保留 15% 留白，防止未加入主畫面的 Safari/Chrome 使用者被底部工具列遮擋) */}
+      <footer className="mt-auto border-t pt-6 pb-2 text-center transition-colors" style={{ 
         borderColor: 'var(--card-border)', 
         backgroundColor: 'var(--card-bg)', 
         color: 'var(--text-dim)' 
       }}>
-        <div className="max-w-4xl mx-auto px-4 space-y-4">
+        <div className="w-full px-3 space-y-3">
           {/* 手機 PWA 安裝獨立網格 (字體 14px) */}
-          <div className="p-4 px-5 rounded-2xl border text-[14px] leading-relaxed shadow-sm text-center"
+          <div className="p-3.5 rounded-xl border text-[13px] leading-relaxed shadow-sm text-left sm:text-center"
                style={{ 
                  backgroundColor: 'var(--card-hover)', 
                  borderColor: 'var(--card-border)',
                  color: 'var(--text)'
                }}>
-            <span>📱 </span>
-            <span className="font-bold text-indigo-400">iPhone (Safari)：</span>
-            <span>以 Safari 開啟上方連結 ➔ 點擊底部「分享」按鈕 ➔ 選擇「加入主畫面」即可在桌面生成 App 圖示，點開即為全螢幕獨立 App！</span>
+            <div className="flex items-start gap-2">
+              <span className="text-base shrink-0">📱</span>
+              <div>
+                <span className="font-bold text-indigo-400">iPhone (Safari)：</span>
+                <span>以 Safari 開啟上方連結 ➔ 點擊底部「分享」按鈕 ➔ 選擇「加入主畫面」即可在桌面生成 App 圖示，點開即為全螢幕獨立 App！</span>
+              </div>
+            </div>
           </div>
 
           {/* 頁尾資料精準換行 */}
-          <div className="flex flex-col items-center justify-center space-y-1.5 text-xs leading-relaxed">
+          <div className="flex flex-col items-center justify-center space-y-1 text-xs leading-relaxed">
             <div className="font-bold tracking-wide" style={{ color: 'var(--text)' }}>
               天泰營造與勤務管理系統 © 2026 Tian-Tai Management
             </div>
@@ -200,8 +207,12 @@ export default function App() {
               執勤單位：飛龍保全 / 中華飛龍物業
             </div>
           </div>
+
+          {/* 底部 15% 自動安全留白區塊 (約 15vh) */}
+          <div className="h-[15vh] w-full pointer-events-none" aria-hidden="true"></div>
         </div>
       </footer>
+    </div>
 
       {/* 後台管理員密碼驗證彈出窗 (密碼: t1898) */}
       {showAdminModal && (

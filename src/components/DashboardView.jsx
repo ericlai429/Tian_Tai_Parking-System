@@ -87,31 +87,30 @@ export default function DashboardView({
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-4 animate-fadeIn">
       {/* 1. 【置頂核心】車牌進出快速核對區 (支援數字3碼及通行證流水號快速過濾) */}
-      <div className="p-6 sm:p-8 rounded-2xl border space-y-5 shadow-lg" 
+      <div className="p-4 rounded-xl border space-y-4 shadow-md" 
            style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4" 
+        <div className="flex flex-col gap-2 border-b pb-3" 
              style={{ borderColor: 'var(--card-border)' }}>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black flex items-center gap-2" style={{ color: 'var(--text)' }}>
-              <Car className="w-6 h-6 text-emerald-400" />
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black flex items-center gap-2" style={{ color: 'var(--text)' }}>
+              <Car className="w-5 h-5 text-emerald-400" />
               <span>車牌快速核對區</span>
             </h2>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-              支援輸入車牌或「任意數字 3 碼」（例：898、132）
-            </p>
+            <div className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              {parkingList.length} 輛 (01~16)
+            </div>
           </div>
-
-          <div className="flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 w-fit">
-            已載入 {parkingList.length} 輛車 (No.01 ~ 16)
-          </div>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            支援輸入車牌或「任意數字 3 碼」（例：898、132）
+          </p>
         </div>
 
         {/* 搜尋輸入列 */}
-        <form onSubmit={handleQuickSubmit} className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-6 h-6 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <form onSubmit={handleQuickSubmit} className="flex flex-col gap-2.5">
+          <div className="relative w-full">
+            <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text"
               value={quickPlate}
@@ -119,8 +118,8 @@ export default function DashboardView({
                 setQuickPlate(e.target.value);
                 if (!e.target.value.trim()) setSelectedVehicle(null);
               }}
-              placeholder="請輸入車牌或數字 3 碼 (例：898 或 1079)..."
-              className="w-full pl-14 pr-4 py-4 rounded-xl border text-xl font-mono font-black tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
+              placeholder="輸入車牌或數字 3 碼..."
+              className="w-full pl-11 pr-3 py-3 rounded-xl border text-lg font-mono font-black tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
               style={{ 
                 backgroundColor: 'var(--card-hover)', 
                 borderColor: 'var(--card-border)',
@@ -131,7 +130,7 @@ export default function DashboardView({
           </div>
           <button 
             type="submit"
-            className="px-8 py-4 rounded-xl font-black text-base bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0"
+            className="w-full py-3 rounded-xl font-black text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0"
           >
             <span>即時驗證放行</span>
           </button>
@@ -179,29 +178,29 @@ export default function DashboardView({
 
         {/* 查驗結果呈現卡 */}
         {selectedVehicle && (
-          <div className={`p-6 rounded-2xl border transition-all ${
+          <div className={`p-4 rounded-xl border transition-all ${
             selectedVehicle.status === 'pass' 
               ? 'border-emerald-500/60 bg-emerald-500/10 glow-emerald' 
               : (selectedVehicle.status === 'pending' ? 'border-amber-500/60 bg-amber-500/10' : 'border-rose-500/60 bg-rose-500/10 glow-rose')
           }`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
                   {selectedVehicle.passNo && (
-                    <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-600 text-white font-mono shadow-sm">
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-black bg-indigo-600 text-white font-mono shadow-sm">
                       通行證 #{selectedVehicle.passNo}
                     </span>
                   )}
-                  <span className="font-mono text-3xl sm:text-4xl font-black tracking-wider" style={{ color: 'var(--text)' }}>
+                  <span className="font-mono text-2xl font-black tracking-wider" style={{ color: 'var(--text)' }}>
                     {selectedVehicle.plate}
                   </span>
                   {selectedVehicle.type === 'vip' && (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-500 text-slate-950 shadow-md">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 shadow-md">
                       👑 VIP長官座車
                     </span>
                   )}
                 </div>
-                <div className="text-sm font-semibold flex flex-wrap items-center gap-3" style={{ color: 'var(--text)' }}>
+                <div className="text-xs font-semibold flex flex-wrap items-center gap-2" style={{ color: 'var(--text)' }}>
                   <span>人員：{selectedVehicle.name}</span>
                   <span>|</span>
                   <span>單位：{selectedVehicle.unit}</span>
@@ -214,20 +213,20 @@ export default function DashboardView({
                 </div>
               </div>
 
-              <div className="shrink-0">
-                <span className={`px-6 py-3 rounded-xl text-lg font-black uppercase tracking-wider flex items-center gap-2 shadow-lg ${
+              <div className="w-full">
+                <span className={`w-full py-2.5 rounded-xl text-base font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md ${
                   selectedVehicle.status === 'pass'
                     ? 'bg-emerald-500 text-white shadow-emerald-500/40'
                     : (selectedVehicle.status === 'pending' ? 'bg-amber-500 text-slate-900 shadow-amber-500/40' : 'bg-rose-500 text-white shadow-rose-500/40')
                 }`}>
                   {selectedVehicle.status === 'pass' ? (
                     <>
-                      <CheckCircle2 className="w-6 h-6" />
+                      <CheckCircle2 className="w-5 h-5" />
                       <span>符合通過 OK!</span>
                     </>
                   ) : (
                     <>
-                      <XCircle className="w-6 h-6" />
+                      <XCircle className="w-5 h-5" />
                       <span>未通過 DENIED</span>
                     </>
                   )}
@@ -239,51 +238,34 @@ export default function DashboardView({
       </div>
 
       {/* 2. 案場資訊與管理控制橫幅 */}
-      <div className="p-6 rounded-2xl border transition-all" style={{
+      <div className="p-4 rounded-xl border transition-all" style={{
         background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.12) 0%, rgba(14, 165, 233, 0.08) 100%)',
         borderColor: 'rgba(99, 102, 241, 0.25)'
       }}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight" style={{ color: 'var(--text)' }}>
+            <h1 className="text-lg font-black tracking-tight" style={{ color: 'var(--text)' }}>
               天泰營造停車管理
             </h1>
-            <p className="text-sm mt-1 flex flex-wrap items-center gap-2" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-xs mt-0.5 flex flex-wrap items-center gap-2" style={{ color: 'var(--text-muted)' }}>
               <span>使用單位：天泰營造 & 飛龍保全</span>
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* 管理員身分切換按鈕 */}
-            <button
-              onClick={onAdminLoginClick}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all ${
-                isAdmin 
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
-                  : 'hover:bg-slate-800/20'
-              }`}
-              style={{
-                borderColor: isAdmin ? 'rgba(245, 158, 11, 0.4)' : 'var(--card-border)',
-                color: isAdmin ? '#fbbf24' : 'var(--text-muted)'
-              }}
-            >
-              {isAdmin ? <Unlock className="w-3.5 h-3.5 text-amber-400" /> : <Lock className="w-3.5 h-3.5 text-slate-400" />}
-              <span>{isAdmin ? 'Admin 已解鎖' : '管理員登入'}</span>
-            </button>
-
+          <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setActiveTab('parking')}
-              className="px-4 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 flex items-center gap-2 transition-all active:scale-95"
+              className="py-2.5 px-3 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/25 flex items-center justify-center gap-1.5 transition-all active:scale-95"
             >
-              <Car className="w-4 h-4" />
-              <span>車輛管制清單</span>
+              <Car className="w-3.5 h-3.5" />
+              <span>車輛清單</span>
             </button>
 
             <button
               onClick={() => setActiveTab('schedule')}
-              className="px-4 py-2.5 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 flex items-center gap-2 transition-transform active:scale-95"
+              className="py-2.5 px-3 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/25 flex items-center justify-center gap-1.5 transition-transform active:scale-95"
             >
-              <span>檢視 9 月班表</span>
+              <span>9 月班表</span>
             </button>
           </div>
         </div>
