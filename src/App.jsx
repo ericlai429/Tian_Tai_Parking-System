@@ -169,21 +169,36 @@ export default function App() {
         )}
       </main>
 
-      {/* 頁尾資訊 (精準三行分行，字級清晰層次分明) */}
-      <footer className="mt-auto border-t py-6 text-center text-xs transition-colors" style={{ 
+      {/* 頁尾資訊 */}
+      <footer className="mt-auto border-t py-8 text-center transition-colors" style={{ 
         borderColor: 'var(--card-border)', 
         backgroundColor: 'var(--card-bg)', 
         color: 'var(--text-dim)' 
       }}>
-        <div className="max-w-4xl mx-auto px-4 flex flex-col items-center justify-center space-y-1.5 leading-relaxed">
-          <div className="font-bold tracking-wide" style={{ color: 'var(--text)' }}>
-            天泰營造與勤務管理系統 © 2026 Tian-Tai Management
+        <div className="max-w-4xl mx-auto px-4 space-y-4">
+          {/* 手機 PWA 安裝獨立網格 (字體 14px) */}
+          <div className="p-4 px-5 rounded-2xl border text-[14px] leading-relaxed shadow-sm text-center"
+               style={{ 
+                 backgroundColor: 'var(--card-hover)', 
+                 borderColor: 'var(--card-border)',
+                 color: 'var(--text)'
+               }}>
+            <span>📱 </span>
+            <span className="font-bold text-indigo-400">iPhone (Safari)：</span>
+            <span>以 Safari 開啟上方連結 ➔ 點擊底部「分享」按鈕 ➔ 選擇「加入主畫面」即可在桌面生成 App 圖示，點開即為全螢幕獨立 App！</span>
           </div>
-          <div className="font-semibold" style={{ color: 'var(--text-muted)' }}>
-            使用單位：天泰營造
-          </div>
-          <div style={{ color: 'var(--text-dim)' }}>
-            執勤單位：飛龍保全 / 中華飛龍物業
+
+          {/* 頁尾資料精準換行 */}
+          <div className="flex flex-col items-center justify-center space-y-1.5 text-xs leading-relaxed">
+            <div className="font-bold tracking-wide" style={{ color: 'var(--text)' }}>
+              天泰營造與勤務管理系統 © 2026 Tian-Tai Management
+            </div>
+            <div className="font-semibold" style={{ color: 'var(--text-muted)' }}>
+              使用單位：天泰營造
+            </div>
+            <div style={{ color: 'var(--text-dim)' }}>
+              執勤單位：飛龍保全 / 中華飛龍物業
+            </div>
           </div>
         </div>
       </footer>
