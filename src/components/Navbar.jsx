@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Shield, Calendar, Car, Cloud, Moon, Sun, 
-  Home, RefreshCw, Layers, Lock, Unlock, Crown, CreditCard 
+  Home, RefreshCw, Layers, Lock, Unlock, KeyRound, CreditCard 
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -59,21 +59,24 @@ export default function Navbar({
               title="輸出並製作符合規格之直式 A4 停車卡"
             >
               <CreditCard className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-              <span className="hidden xs:inline">停車証</span>
+              <span className="hidden sm:inline">停車証</span>
             </button>
 
-            {/* 後台管理員登入切換鈕 (密碼: t1898) */}
+            {/* 後台管理員登入切換鈕 (密碼: t1898，鑰匙圖示，移除文字) */}
             <button
               onClick={onAdminToggle}
-              className={`flex items-center gap-1 text-[11px] px-1.5 sm:px-2 py-1 rounded-lg border font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                 isAdmin 
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs' 
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs hover:bg-amber-500/30' 
                   : 'text-slate-400 border-slate-700 hover:bg-slate-800/30'
               }`}
-              title={isAdmin ? "目前已登入 Admin (點擊登出)" : "點擊輸入密碼登入後台"}
+              title={isAdmin ? "管理員已登入 (點擊登出)" : "後台登入 (點擊輸入密碼)"}
             >
-              {isAdmin ? <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" /> : <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
-              <span>{isAdmin ? 'Admin' : '後台'}</span>
+              {isAdmin ? (
+                <KeyRound className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              ) : (
+                <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              )}
             </button>
 
             {/* 雲端對接設定入口 (嚴格僅 Admin 可見且可點擊，訪客完全不可見) */}
