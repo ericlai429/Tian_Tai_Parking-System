@@ -39,8 +39,8 @@ export default function Navbar({
                 <span className="text-base font-black tracking-tight" style={{ color: 'var(--text)' }}>
                   天泰營造
                 </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 border border-indigo-500/20">
-                  v1.0
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 whitespace-nowrap">
+                  V1.0  2026.9/8
                 </span>
               </div>
               <div className="text-[10px] font-medium leading-none mt-0.5" style={{ color: 'var(--text-muted)' }}>
