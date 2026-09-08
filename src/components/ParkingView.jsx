@@ -348,16 +348,16 @@ export default function ParkingView({
           </div>
         </div>
 
-        {/* 表格 (設定 min-w 與 whitespace-nowrap 防止車牌斷行與人名變直列) */}
+        {/* 表格 (依順序：編號 - 所屬公司 - 職稱 - 姓名 - 車牌號碼) */}
         <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--card-border)' }}>
           <table className="w-full text-left border-collapse text-xs min-w-[700px]">
             <thead>
               <tr className="border-b whitespace-nowrap" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--card-hover)' }}>
                 <th className="p-3 font-bold w-12 text-center" style={{ color: 'var(--text-dim)' }}>編號</th>
-                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>車牌號碼</th>
-                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>姓名 / 人員</th>
                 <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>所屬公司</th>
-                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>職稱 / 身分</th>
+                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>職稱</th>
+                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>姓名</th>
+                <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>車牌號碼</th>
                 <th className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>類別</th>
                 <th className="p-3 font-bold text-center whitespace-nowrap" style={{ color: 'var(--text)' }}>通行狀態</th>
                 {isAdmin && (
@@ -373,17 +373,17 @@ export default function ParkingView({
                       {formatPassNo(item, idx)}
                     </span>
                   </td>
-                  <td className="p-3 font-mono font-black text-sm tracking-wider whitespace-nowrap" style={{ color: 'var(--text)' }}>
-                    {item.plate}
+                  <td className="p-3 font-semibold whitespace-nowrap" style={{ color: 'var(--text)' }}>
+                    {item.unit}
+                  </td>
+                  <td className="p-3 font-medium whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+                    {item.subItem || '-'}
                   </td>
                   <td className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>
                     {item.name}
                   </td>
-                  <td className="p-3 whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
-                    {item.unit}
-                  </td>
-                  <td className="p-3 font-medium whitespace-nowrap" style={{ color: 'var(--text)' }}>
-                    {item.subItem || '-'}
+                  <td className="p-3 font-mono font-black text-sm tracking-wider whitespace-nowrap text-sky-400">
+                    {item.plate}
                   </td>
                   <td className="p-3 whitespace-nowrap">
                     <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
