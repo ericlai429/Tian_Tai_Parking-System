@@ -144,8 +144,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start transition-colors duration-300" style={{ backgroundColor: 'var(--bg)' }}>
-      {/* 限制本機與各環境為 iPhone 13 Pro 規格尺寸 (390px ~ 430px) 置中，避免在大螢幕過度放大 */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col border-x shadow-2xl transition-all"
+      {/* 嚴格鎖定全螢幕/筆電/手機皆為固定手機尺寸 (max-w-[430px]) 置中，任何分頁切換皆不變動尺寸 */}
+      <div className="w-full max-w-[430px] min-h-screen flex flex-col border-x shadow-2xl transition-colors duration-200"
            style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--bg)' }}>
         {/* 導覽列 */}
         <Navbar 

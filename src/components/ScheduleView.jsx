@@ -1,10 +1,69 @@
-import React, { useState, useRef } from 'react';
-import { Calendar, ClipboardList, Clock, ShieldCheck, CheckCircle2, AlertCircle, Download, MapPin, ZoomIn, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Calendar, ClipboardList, Clock, ShieldCheck, CheckCircle2, AlertCircle, Download, MapPin, ZoomIn, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function ScheduleView({ scheduleData, setScheduleData }) {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [fontSizeLevel, setFontSizeLevel] = useState(0); // 0: 標準, 1: 中, 2: 大 (放大三級)
   const longPressTimer = useRef(null);
+  
+  // 橫向滾動與滑鼠拖曳 Ref
+  const tableContainerRef = useRef(null);
+  const isMouseDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // 滑鼠滾輪直接水平捲動 (NB 筆電滑鼠支援)
+  useEffect(() => {
+    const el = tableContainerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e) => {
+      if (Math.abs(e.deltaY) > 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  // 滑鼠按住拖曳平移 (Drag-to-Scroll)
+  const handleMouseDown = (e) => {
+    if (e.button !== 0 || !tableContainerRef.current) return;
+    isMouseDownRef.current = true;
+    setIsDragging(true);
+    startXRef.current = e.pageX - tableContainerRef.current.offsetLeft;
+    scrollLeftRef.current = tableContainerRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isMouseDownRef.current || !tableContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - tableContainerRef.current.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    tableContainerRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isMouseDownRef.current = false;
+    setIsDragging(false);
+  };
+
+  // 左右快速平移跳轉
+  const scrollSchedule = (direction) => {
+    if (!tableContainerRef.current) return;
+    const delta = direction === 'left' ? -220 : 220;
+    tableContainerRef.current.scrollBy({ left: delta, behavior: 'smooth' });
+  };
+
+  // 快速跳轉至上旬、中旬、下旬
+  const scrollToDay = (day) => {
+    if (!tableContainerRef.current) return;
+    const targetLeft = Math.max(0, (day - 1) * 32);
+    tableContainerRef.current.scrollTo({ left: targetLeft, behavior: 'smooth' });
+  };
 
   // 切換 3 級字體大小
   const toggleFontSize = () => {
@@ -58,46 +117,109 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
 
   return (
     <div className="space-y-4 animate-fadeIn">
-      {/* 現場執勤表 (極簡純淨版，不強調矩陣，四周緊密適中，保證手機不遮擋) */}
-      <div className="p-3 sm:p-4 rounded-xl border overflow-x-auto space-y-3" 
+      {/* 現場執勤表 (四周緊密適中，無強制換行，支援滑鼠滾輪與拖曳) */}
+      <div className="p-3 rounded-xl border space-y-3" 
            style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
         
-        {/* 表格頂部簡潔標題列 */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2.5"
+        {/* 表格頂部標題列與時段快速跳轉按鈕 */}
+        <div className="flex flex-col gap-2 border-b pb-2.5"
              style={{ borderColor: 'var(--card-border)' }}>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-indigo-400 shrink-0" />
-            <h2 className="text-base sm:text-lg font-black tracking-tight" style={{ color: 'var(--text)' }}>
-              現場執勤表
-            </h2>
-            <span className="text-[11px] px-2 py-0.5 rounded font-bold bg-indigo-500/20 text-indigo-300">
-              115年9月份
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-indigo-400 shrink-0" />
+              <h2 className="text-base font-black tracking-tight whitespace-nowrap" style={{ color: 'var(--text)' }}>
+                現場執勤表
+              </h2>
+              <span className="text-[11px] px-2 py-0.5 rounded font-bold bg-indigo-500/20 text-indigo-300 whitespace-nowrap">
+                115年9月份
+              </span>
+            </div>
+
+            {/* 左右快速移動微調按鈕 */}
+            <div className="flex items-center gap-1">
+              <button 
+                type="button"
+                onClick={() => scrollSchedule('left')}
+                className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-300 hover:text-white transition-all shadow-sm"
+                title="向左滑動查詢前日時段"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button 
+                type="button"
+                onClick={() => scrollSchedule('right')}
+                className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-300 hover:text-white transition-all shadow-sm"
+                title="向右滑動查詢後日時段"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2.5 text-[11px]">
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded bg-amber-400/30 border border-amber-400"></span> 週末例假日
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded bg-rose-500/20 text-rose-400 text-center font-bold leading-3">休</span> 排休
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded bg-fuchsia-500/40 border border-fuchsia-400"></span> 9/11 代班
-            </span>
+          <div className="flex items-center justify-between gap-1 text-[11px] flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                <span className="w-2.5 h-2.5 rounded bg-amber-400/30 border border-amber-400"></span> 週末
+              </span>
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                <span className="w-2.5 h-2.5 rounded bg-rose-500/20 text-rose-400 text-center font-bold leading-3">休</span> 排休
+              </span>
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                <span className="w-2.5 h-2.5 rounded bg-fuchsia-500/40 border border-fuchsia-400"></span> 9/11代班
+              </span>
+            </div>
+
+            {/* 快速定位旬別按鈕 */}
+            <div className="flex items-center gap-1 text-[11px] font-bold">
+              <button 
+                onClick={() => scrollToDay(1)}
+                className="px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 active:scale-95 text-indigo-300 border border-indigo-500/30 whitespace-nowrap transition-all"
+                title="跳轉至 1 ~ 10 日"
+              >
+                1~10日
+              </button>
+              <button 
+                onClick={() => scrollToDay(11)}
+                className="px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 active:scale-95 text-indigo-300 border border-indigo-500/30 whitespace-nowrap transition-all"
+                title="跳轉至 11 ~ 20 日"
+              >
+                11~20日
+              </button>
+              <button 
+                onClick={() => scrollToDay(21)}
+                className="px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 active:scale-95 text-indigo-300 border border-indigo-500/30 whitespace-nowrap transition-all"
+                title="跳轉至 21 ~ 30 日"
+              >
+                21~30日
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* 執勤明細表格 */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-center border-collapse min-w-[1020px] text-xs font-mono">
+        {/* 執勤明細表格 (支援滑鼠滾輪水平移動、滑鼠按住拖曳、觸控滑動) */}
+        <div 
+          ref={tableContainerRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          className={`overflow-x-auto select-none transition-colors ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+          style={{
+            scrollbarWidth: 'thin',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehaviorX: 'contain'
+          }}
+        >
+          <table className="w-full text-center border-collapse min-w-[1100px] text-xs font-mono">
             <thead>
               {/* 日期列 1 ~ 30 */}
               <tr className="border-b" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--card-hover)' }}>
-                <th className="p-2 text-center font-sans font-bold w-[72px] min-w-[72px] sticky left-0 z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-hover)', color: 'var(--text)' }}>
+                <th className="p-2 text-center font-sans font-bold w-[66px] min-w-[66px] sticky left-0 z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-hover)', color: 'var(--text)' }}>
                   班別
                 </th>
-                <th className="p-2 text-center font-sans font-bold w-[78px] min-w-[78px] sticky left-[72px] z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-hover)', color: 'var(--text)' }}>
+                <th className="p-2 text-center font-sans font-bold w-[74px] min-w-[74px] sticky left-[66px] z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-hover)', color: 'var(--text)' }}>
                   人員
                 </th>
                 {Array.from({ length: scheduleData.daysInMonth }, (_, i) => i + 1).map(d => {
@@ -105,7 +227,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                   return (
                     <th 
                       key={d} 
-                      className={`p-1 font-bold ${weekend ? 'bg-amber-400/20 text-amber-300' : ''}`}
+                      className={`p-1 font-bold w-8 min-w-[32px] whitespace-nowrap ${weekend ? 'bg-amber-400/20 text-amber-300' : ''}`}
                       style={{ color: weekend ? '#fbbf24' : 'var(--text)' }}
                     >
                       {d}
@@ -117,13 +239,13 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
               {/* 星期幾列 */}
               <tr className="border-b text-[11px]" style={{ borderColor: 'var(--card-border)' }}>
                 <th className="p-1 sticky left-0 z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-bg)' }}>-</th>
-                <th className="p-1 sticky left-[72px] z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-bg)' }}>-</th>
+                <th className="p-1 sticky left-[66px] z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-bg)' }}>-</th>
                 {Array.from({ length: scheduleData.daysInMonth }, (_, i) => i + 1).map(d => {
                   const weekend = isWeekendDay(d);
                   return (
                     <th 
                       key={d} 
-                      className={`p-1 font-sans font-bold ${weekend ? 'bg-amber-400/25 text-amber-400' : ''}`}
+                      className={`p-1 font-sans font-bold w-8 min-w-[32px] whitespace-nowrap ${weekend ? 'bg-amber-400/25 text-amber-400' : ''}`}
                       style={{ color: weekend ? '#f59e0b' : 'var(--text-muted)' }}
                     >
                       {getWeekdayName(d)}
@@ -136,7 +258,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
             <tbody>
               {scheduleData.guards.map((guard) => (
                 <tr key={guard.id} className="border-b hover:bg-slate-800/10 transition-colors" style={{ borderColor: 'var(--card-border)' }}>
-                  {/* 班別 (寬度足夠且 whitespace-nowrap，保證 日班 / 日機 絕不換行) */}
+                  {/* 班別 */}
                   <td className="p-2 font-sans font-bold text-center sticky left-0 z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text)' }}>
                     <span className={`inline-block px-2.5 py-1 rounded text-xs font-black tracking-wider whitespace-nowrap ${
                       guard.role === '日班' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-sky-500/20 text-sky-300'
@@ -146,7 +268,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                   </td>
 
                   {/* 人員姓名 */}
-                  <td className="p-2 font-sans font-extrabold text-center sticky left-[72px] z-20 whitespace-nowrap text-xs" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text)' }}>
+                  <td className="p-2 font-sans font-extrabold text-center sticky left-[66px] z-20 whitespace-nowrap text-xs" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text)' }}>
                     {guard.name}
                   </td>
 
@@ -159,7 +281,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                     return (
                       <td 
                         key={d} 
-                        className={`p-1 transition-all ${weekend ? 'bg-amber-400/5' : ''}`}
+                        className={`p-1 w-8 min-w-[32px] whitespace-nowrap transition-all ${weekend ? 'bg-amber-400/5' : ''}`}
                       >
                         {shift === 'A' ? (
                           <span className={`inline-flex items-center justify-center w-6 h-6 rounded font-black text-xs ${
@@ -185,6 +307,18 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* 筆電滑鼠操作友善小提示 */}
+        <div className="flex items-center justify-between text-[11px] px-1 text-slate-400 border-t pt-2"
+             style={{ borderColor: 'var(--card-border)' }}>
+          <span className="flex items-center gap-1 text-indigo-300 font-medium">
+            <span>🖱️</span>
+            <span>NB 滑鼠滾輪／按住拖曳可水平移動</span>
+          </span>
+          <span className="text-[10px] text-slate-500 whitespace-nowrap">
+            ← 左右滑動查閱全月 →
+          </span>
         </div>
       </div>
 
