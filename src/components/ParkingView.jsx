@@ -382,7 +382,7 @@ export default function ParkingView({
                   <td className="p-3 font-bold whitespace-nowrap" style={{ color: 'var(--text)' }}>
                     {item.name}
                   </td>
-                  <td className="p-3 font-mono font-black text-sm tracking-wider whitespace-nowrap text-sky-400">
+                  <td className="p-3 font-mono font-black text-sm tracking-wider whitespace-nowrap" style={{ color: 'var(--plate-color)' }}>
                     {item.plate}
                   </td>
                   <td className="p-3 whitespace-nowrap">

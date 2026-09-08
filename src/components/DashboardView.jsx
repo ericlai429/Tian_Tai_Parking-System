@@ -83,58 +83,65 @@ export default function DashboardView({
       return;
     }
 
+    // 直式相片規格 (寬度 600px，適合手機直接長螢幕瀏覽或轉發 LINE/相簿)
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const width = 900;
-    const rowHeight = 44;
-    const headerHeight = 160;
-    const padding = 30;
-    const height = headerHeight + (entryLogs.length * rowHeight) + padding + 60;
+    const width = 600;
+    const rowHeight = 52; // 加高單行，字體更大
+    const headerHeight = 150;
+    const padding = 20;
+    const tableHeaderHeight = 44;
+    // 確保照片具備直式縱深 (至少 800px 高度)
+    const contentHeight = headerHeight + tableHeaderHeight + (entryLogs.length * rowHeight) + 60;
+    const height = Math.max(850, contentHeight);
 
     canvas.width = width;
     canvas.height = height;
 
-    // 1. 科技感深色漸層背景
+    // 1. 深色質感漸層背景
     const grad = ctx.createLinearGradient(0, 0, 0, height);
-    grad.addColorStop(0, '#0f172a');
+    grad.addColorStop(0, '#0b1329');
     grad.addColorStop(1, '#1e293b');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
 
-    // 2. 頂部飾條與標題
+    // 2. 頂部飾條與大標題 (字體加大)
     ctx.fillStyle = '#4f46e5';
     ctx.fillRect(0, 0, width, 8);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 26px "Noto Sans TC", sans-serif';
-    ctx.fillText('天泰營造 工區大門－車輛進場時間留存表', padding, 52);
+    ctx.font = 'bold 24px "Noto Sans TC", sans-serif';
+    ctx.fillText('天泰營造 工區車輛進場留存表', padding, 48);
 
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '15px "Noto Sans TC", sans-serif';
     const now = new Date();
     const exportTimeStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    ctx.fillText(`製表時間：${exportTimeStr}  |  執勤管理：天泰營造 & 飛龍保全  |  進場總計：${entryLogs.length} 車次`, padding, 84);
+    
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px "Noto Sans TC", sans-serif';
+    ctx.fillText(`製表時間：${exportTimeStr}`, padding, 78);
+    ctx.fillText(`執勤單位：天泰營造 & 飛龍保全  |  進場：${entryLogs.length} 車次`, padding, 102);
 
-    // 3. 欄位標題條 (單位, 車牌, 時間)
-    const tableTop = 115;
-    ctx.fillStyle = 'rgba(79, 70, 229, 0.25)';
-    ctx.fillRect(padding, tableTop, width - (padding * 2), 38);
-    ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
-    ctx.strokeRect(padding, tableTop, width - (padding * 2), 38);
+    // 3. 欄位標題條 (序號、車牌、單位人員、進場時間 緊密排列，無多餘留白)
+    // 欄位分佈：序號(45px) | 車牌(160px) | 單位/人員(225px) | 進場時間(130px)
+    const tableTop = 125;
+    ctx.fillStyle = 'rgba(79, 70, 229, 0.35)';
+    ctx.fillRect(padding, tableTop, width - (padding * 2), tableHeaderHeight);
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.6)';
+    ctx.strokeRect(padding, tableTop, width - (padding * 2), tableHeaderHeight);
 
-    ctx.fillStyle = '#cbd5e1';
-    ctx.font = 'bold 15px "Noto Sans TC", sans-serif';
-    ctx.fillText('序號', padding + 15, tableTop + 25);
-    ctx.fillText('車牌號碼', padding + 85, tableTop + 25);
-    ctx.fillText('單位 / 人員', padding + 270, tableTop + 25);
-    ctx.fillText('進場時間 (年/月/日 時:分)', padding + 590, tableTop + 25);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 16px "Noto Sans TC", sans-serif';
+    ctx.fillText('序號', padding + 8, tableTop + 28);
+    ctx.fillText('車牌號碼', padding + 52, tableTop + 28);
+    ctx.fillText('單位 / 人員', padding + 215, tableTop + 28);
+    ctx.fillText('進場時間', padding + 435, tableTop + 28);
 
-    // 4. 表格行渲染
-    let currentY = tableTop + 38;
+    // 4. 表格行渲染 (字體加大清晰易讀)
+    let currentY = tableTop + tableHeaderHeight;
     entryLogs.forEach((item, index) => {
       // 斑馬條紋背景
       if (index % 2 === 1) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
         ctx.fillRect(padding, currentY, width - (padding * 2), rowHeight);
       }
 
@@ -145,41 +152,41 @@ export default function DashboardView({
       ctx.lineTo(width - padding, currentY + rowHeight);
       ctx.stroke();
 
-      // 序號
+      // 序號 (字體加大 16px)
       ctx.fillStyle = '#64748b';
-      ctx.font = '14px monospace';
-      ctx.fillText(String(index + 1).padStart(2, '0'), padding + 15, currentY + 28);
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText(String(index + 1).padStart(2, '0'), padding + 10, currentY + 33);
 
-      // 車牌號碼 (明顯加粗)
+      // 車牌號碼 (字體加大 19px，高對比明亮天藍色)
       ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 17px monospace';
+      ctx.font = 'bold 19px monospace';
       const passTag = item.passNo ? `[#${item.passNo}] ` : '';
-      ctx.fillText(`${passTag}${item.plate}`, padding + 85, currentY + 28);
+      ctx.fillText(`${passTag}${item.plate}`, padding + 52, currentY + 33);
 
-      // 單位 / 人員
-      ctx.fillStyle = '#e2e8f0';
-      ctx.font = '15px "Noto Sans TC", sans-serif';
+      // 單位 / 人員 (字體加大 16px，緊湊不留白)
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = 'bold 16px "Noto Sans TC", sans-serif';
       const unitText = item.subItem ? `${item.unit} (${item.subItem})` : `${item.unit} - ${item.name}`;
-      ctx.fillText(unitText.slice(0, 22), padding + 270, currentY + 28);
+      ctx.fillText(unitText.slice(0, 14), padding + 215, currentY + 33);
 
-      // 進場時間 (精準到分，不顯示秒)
+      // 進場時間 (字體加大 16px，翡翠綠)
       ctx.fillStyle = '#34d399';
-      ctx.font = 'bold 15px monospace';
-      ctx.fillText(item.time, padding + 590, currentY + 28);
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText(item.time, padding + 435, currentY + 33);
 
       currentY += rowHeight;
     });
 
-    // 5. 底部相片水印簽署
+    // 5. 底部相片浮水印
     ctx.fillStyle = '#64748b';
     ctx.font = '13px "Noto Sans TC", sans-serif';
-    ctx.fillText('天泰營造現場智慧車輛放行管制系統存證相片  本資料真實有效', padding, height - 25);
+    ctx.fillText('天泰營造現場智慧車輛放行管制系統存證相片', padding, height - 25);
 
-    // 6. 觸發下載 JPG/PNG
+    // 6. 觸發下載直式照片
     const fileDate = now.toISOString().slice(0, 10).replace(/-/g, '');
     const dataUrl = canvas.toDataURL('image/png');
     const link = document.createElement('a');
-    link.download = `天泰車輛進場時間留存_${fileDate}.png`;
+    link.download = `天泰車輛進場直式存證_${fileDate}.png`;
     link.href = dataUrl;
     link.click();
   };
@@ -459,8 +466,23 @@ export default function DashboardView({
                   <span className="font-mono text-[11px] font-bold text-slate-400 w-5 text-center shrink-0">
                     {String(idx + 1).padStart(2, '0')}
                   </span>
-                  <span className="font-mono font-black text-sm tracking-wide text-sky-400 shrink-0">
-                    {log.passNo ? `[#${log.passNo}] ` : ''}{log.plate}
+                  {log.passNo && (
+                    <span 
+                      className="font-mono text-[11px] font-black px-1.5 py-0.5 rounded shrink-0 border"
+                      style={{ 
+                        backgroundColor: 'var(--passno-bg)', 
+                        color: 'var(--passno-text)',
+                        borderColor: 'currentColor'
+                      }}
+                    >
+                      #{log.passNo}
+                    </span>
+                  )}
+                  <span 
+                    className="font-mono font-black text-sm tracking-wider shrink-0"
+                    style={{ color: 'var(--plate-color)' }}
+                  >
+                    {log.plate}
                   </span>
                   <span className="truncate font-semibold" style={{ color: 'var(--text)' }}>
                     {log.unit}

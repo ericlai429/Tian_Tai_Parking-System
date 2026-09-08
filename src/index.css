@@ -33,6 +33,9 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  --plate-color: #38bdf8;
+  --passno-bg: rgba(99, 102, 241, 0.2);
+  --passno-text: #a5b4fc;
 }
 
 body.light-mode {
@@ -45,6 +48,9 @@ body.light-mode {
   --text-dim: #94a3b8;
   --border: #cbd5e1;
   --shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.08);
+  --plate-color: #0284c7;
+  --passno-bg: rgba(79, 70, 229, 0.12);
+  --passno-text: #4338ca;
 }
 
 body {
