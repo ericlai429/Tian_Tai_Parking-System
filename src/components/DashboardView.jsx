@@ -21,7 +21,7 @@ export default function DashboardView({
   // 提取純數字
   const extractDigits = (str) => (str || '').replace(/\D/g, '');
 
-  // 即時 3 碼 / 模糊過濾候選車輛
+  // 即時 3 碼 / 流水號 / 模糊過濾候選車輛
   const candidates = useMemo(() => {
     const q = quickPlate.trim();
     if (!q) return [];
@@ -32,7 +32,12 @@ export default function DashboardView({
     return parkingList.filter(item => {
       const plateClean = cleanStr(item.plate);
       const plateDigits = extractDigits(item.plate);
+      const passNo = item.passNo ? String(item.passNo) : '';
 
+      // 若查詢流水號 (如輸入 1, 01, 7, 07, 14 等)
+      if (passNo && (passNo === q || passNo === q.padStart(2, '0') || passNo.endsWith(q))) {
+        return true;
+      }
       // 若使用者輸入的是純數字 (例如輸入 3 碼數字：898, 132, 079 等)
       if (qDigits && qDigits.length >= 2 && plateDigits.includes(qDigits)) {
         return true;
@@ -46,7 +51,7 @@ export default function DashboardView({
         return true;
       }
       return false;
-    }).slice(0, 8); // 取前 8 筆相符結果
+    }).slice(0, 10);
   }, [parkingList, quickPlate]);
 
   // 選中或確認驗證
@@ -83,28 +88,23 @@ export default function DashboardView({
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* 1. 【置頂核心】車牌進出快速核對站 (支援數字3碼快速過濾) */}
+      {/* 1. 【置頂核心】車牌進出快速核對區 (支援數字3碼及通行證流水號快速過濾) */}
       <div className="p-6 sm:p-8 rounded-2xl border space-y-5 shadow-lg" 
            style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4" 
              style={{ borderColor: 'var(--card-border)' }}>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-500 text-white tracking-wider">
-                置頂管制
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black flex items-center gap-2" style={{ color: 'var(--text)' }}>
-                <Car className="w-6 h-6 text-emerald-400" />
-                <span>車牌快速核對區</span>
-              </h2>
-            </div>
+            <h2 className="text-xl sm:text-2xl font-black flex items-center gap-2" style={{ color: 'var(--text)' }}>
+              <Car className="w-6 h-6 text-emerald-400" />
+              <span>車牌快速核對區</span>
+            </h2>
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-              支援輸入車牌或<strong>「任意數字 3 碼」</strong>即時快搜放行（例如：輸入 <strong>132</strong>、<strong>079</strong>、<strong>898</strong>、<strong>113</strong>）
+              支援輸入車牌或<strong>「任意數字 3 碼」</strong>（例：<strong>898</strong>、<strong>132</strong>、<strong>079</strong>）或<strong>「通行證流水號」</strong>（例：<strong>01</strong>、<strong>07</strong>）即時放行
             </p>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 w-fit">
-            資料庫載入 {parkingList.length} 輛車
+            已載入 {parkingList.length} 輛車 (No.01 ~ 16)
           </div>
         </div>
 
@@ -137,7 +137,7 @@ export default function DashboardView({
           </button>
         </form>
 
-        {/* 數字 3 碼即時候選推薦標籤區 */}
+        {/* 即時候選推薦標籤區 (含通行證編號 No. 與車牌) */}
         {candidates.length > 0 && (
           <div className="p-3.5 rounded-xl border space-y-2" style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)' }}>
             <div className="text-xs font-bold flex items-center justify-between" style={{ color: 'var(--text-muted)' }}>
@@ -153,13 +153,18 @@ export default function DashboardView({
                   key={item.id}
                   type="button"
                   onClick={() => handleSelectVehicle(item)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-95"
+                  className="px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-95"
                   style={{
                     backgroundColor: selectedVehicle?.id === item.id ? 'var(--primary)' : 'var(--card-bg)',
                     borderColor: selectedVehicle?.id === item.id ? 'var(--primary)' : 'var(--card-border)',
                     color: selectedVehicle?.id === item.id ? '#ffffff' : 'var(--text)'
                   }}
                 >
+                  {item.passNo && (
+                    <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-[11px] font-black">
+                      #{item.passNo}
+                    </span>
+                  )}
                   <span className="font-mono text-sm tracking-wider font-black text-emerald-400">
                     {item.plate}
                   </span>
@@ -182,6 +187,11 @@ export default function DashboardView({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-3">
+                  {selectedVehicle.passNo && (
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-600 text-white font-mono shadow-sm">
+                      通行證 #{selectedVehicle.passNo}
+                    </span>
+                  )}
                   <span className="font-mono text-3xl sm:text-4xl font-black tracking-wider" style={{ color: 'var(--text)' }}>
                     {selectedVehicle.plate}
                   </span>
@@ -244,7 +254,7 @@ export default function DashboardView({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* 管理員身分切換按鈕 (密碼: t1898) */}
+            {/* 管理員身分切換按鈕 */}
             <button
               onClick={onAdminLoginClick}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all ${
