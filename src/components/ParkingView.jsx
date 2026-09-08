@@ -260,15 +260,17 @@ export default function ParkingView({
               className="hidden" 
             />
 
-            <button
-              onClick={handleSyncCloudSheet}
-              disabled={isSyncing}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
-              title="雲端同步名冊"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? '同步中' : '同步'}</span>
-            </button>
+            {isAdmin && (
+              <button
+                onClick={handleSyncCloudSheet}
+                disabled={isSyncing}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                title="雲端同步名冊"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? '同步中' : '同步'}</span>
+              </button>
+            )}
 
             {isAdmin && (
               <button

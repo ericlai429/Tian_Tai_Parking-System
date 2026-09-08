@@ -13,12 +13,14 @@ export default function Navbar({
   isAdmin,
   onAdminToggle
 }) {
-  const tabs = [
+  const allTabs = [
     { id: 'dashboard', label: '總覽戰情室', icon: Activity },
     { id: 'schedule', label: '天泰三總班表', icon: Calendar, badge: '115.9' },
     { id: 'parking', label: '智慧停車管理', icon: Car },
     { id: 'cloud', label: '雲端試算表對接', icon: Cloud }
   ];
+
+  const tabs = isAdmin ? allTabs : allTabs.filter(t => t.id !== 'cloud');
 
   return (
     <header className="border-b transition-colors sticky top-0 z-40" style={{ 
@@ -65,20 +67,22 @@ export default function Navbar({
               <span>{isAdmin ? 'Admin' : '後台'}</span>
             </button>
 
-            {/* 雲端狀態小標籤 */}
-            <button
-              onClick={() => setActiveTab('cloud')}
-              className="flex items-center space-x-1 text-[11px] px-2 py-1 rounded-lg border transition-all"
-              style={{ 
-                borderColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.4)' : 'var(--card-border)',
-                backgroundColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                color: cloudStatus.connected ? '#10b981' : 'var(--text-dim)'
-              }}
-              title="雲端資料庫狀態"
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${cloudStatus.connected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
-              <span className="font-semibold">{cloudStatus.connected ? '連線' : '本地'}</span>
-            </button>
+            {/* 雲端狀態小標籤 (僅 Admin 可見可點擊) */}
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('cloud')}
+                className="flex items-center space-x-1 text-[11px] px-2 py-1 rounded-lg border transition-all"
+                style={{ 
+                  borderColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.4)' : 'var(--card-border)',
+                  backgroundColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                  color: cloudStatus.connected ? '#10b981' : 'var(--text-dim)'
+                }}
+                title="雲端資料庫狀態"
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${cloudStatus.connected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                <span className="font-semibold">{cloudStatus.connected ? '連線' : '本地'}</span>
+              </button>
+            )}
 
             {/* 主題切換 */}
             <button

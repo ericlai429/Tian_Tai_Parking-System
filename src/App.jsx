@@ -108,7 +108,17 @@ export default function App() {
   const handleAdminLogout = () => {
     setIsAdmin(false);
     localStorage.removeItem('tian_tai_admin_auth');
+    if (activeTab === 'cloud') {
+      setActiveTab('dashboard');
+    }
   };
+
+  // 若非 Admin 身分，禁止停留或跳轉至雲端對接分頁
+  useEffect(() => {
+    if (!isAdmin && activeTab === 'cloud') {
+      setActiveTab('dashboard');
+    }
+  }, [isAdmin, activeTab]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start transition-colors duration-300" style={{ backgroundColor: 'var(--bg)' }}>
@@ -170,7 +180,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'cloud' && (
+        {isAdmin && activeTab === 'cloud' && (
           <CloudSyncModal 
             cloudConfig={cloudConfig}
             setCloudConfig={setCloudConfig}
