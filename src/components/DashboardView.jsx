@@ -203,17 +203,17 @@ export default function DashboardView({
       ctx.font = 'bold 16px monospace';
       ctx.fillText(String(index + 1).padStart(2, '0'), padding + 10, currentY + 33);
 
-      // 車牌號碼 (字體加大 19px，高對比明亮天藍色)
+      // 車牌號碼 (16px monospace，高對比明亮天藍色，長車牌不擠壓下一欄)
       ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 19px monospace';
+      ctx.font = 'bold 16px monospace';
       const passTag = item.passNo ? `[#${item.passNo}] ` : '';
-      ctx.fillText(`${passTag}${item.plate}`, padding + 52, currentY + 33);
+      ctx.fillText(`${passTag}${item.plate}`, padding + 48, currentY + 33);
 
-      // 單位 / 人員 (字體加大 16px，緊湊不留白)
+      // 單位 / 人員 (15px，緊湊不留白)
       ctx.fillStyle = '#f1f5f9';
-      ctx.font = 'bold 16px "Noto Sans TC", sans-serif';
+      ctx.font = 'bold 15px "Noto Sans TC", sans-serif';
       const unitText = item.subItem ? `${item.unit} (${item.subItem})` : `${item.unit} - ${item.name}`;
-      ctx.fillText(unitText.slice(0, 14), padding + 215, currentY + 33);
+      ctx.fillText(unitText.slice(0, 14), padding + 225, currentY + 33);
 
       // 進場時間 (字體加大 16px，翡翠綠)
       ctx.fillStyle = '#34d399';
@@ -494,13 +494,13 @@ export default function DashboardView({
               </span>
               <span className="text-[11px] text-slate-400">共 {candidates.length} 筆相符</span>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {candidates.map(item => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => handleSelectVehicle(item)}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-between gap-2 hover:scale-[1.01] active:scale-95 text-left cursor-pointer"
+                  className="w-full p-2.5 sm:p-3 rounded-xl border transition-all flex flex-col gap-1.5 text-left cursor-pointer active:scale-95 shadow-sm hover:border-indigo-500"
                   style={{
                     backgroundColor: selectedVehicle?.id === item.id ? 'rgba(79, 70, 229, 0.25)' : 'var(--card-bg)',
                     borderColor: selectedVehicle?.id === item.id ? 'var(--primary)' : 'var(--card-border)',
@@ -508,32 +508,39 @@ export default function DashboardView({
                     color: 'var(--text)'
                   }}
                 >
-                  {/* 左側：證號 + 車牌號碼 (大字、綠字高對比、絕不折行) */}
-                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    {item.passNo && (
-                      <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-xs font-black border border-indigo-500/30 whitespace-nowrap">
-                        #{item.passNo}
+                  {/* 第一行：證號 + 車牌大字 (完全獨立一行，絕不擠壓重疊) + 點選放行按鈕 */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {item.passNo && (
+                        <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-xs font-black border border-indigo-500/30 whitespace-nowrap">
+                          #{item.passNo}
+                        </span>
+                      )}
+                      <span className="font-mono text-base sm:text-lg font-black tracking-wider text-emerald-400 whitespace-nowrap">
+                        {item.plate}
                       </span>
-                    )}
-                    <span className="font-mono text-sm sm:text-base font-black tracking-wider text-emerald-400 whitespace-nowrap">
-                      {item.plate}
+                      {item.type === 'vip' && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 whitespace-nowrap">
+                          👑VIP
+                        </span>
+                      )}
+                    </div>
+
+                    <span className="text-[11px] font-bold text-indigo-300 bg-indigo-500/15 px-2 py-0.5 rounded-md border border-indigo-500/30 whitespace-nowrap">
+                      點選放行
                     </span>
-                    {item.type === 'vip' && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 whitespace-nowrap">
-                        👑VIP
-                      </span>
-                    )}
                   </div>
 
-                  {/* 右側：人員姓名 + 單位/職稱 (右對齊、單行完整呈現) */}
-                  <div className="flex items-center gap-1 min-w-0 text-xs font-bold justify-end text-right">
-                    <span className="whitespace-nowrap font-black" style={{ color: 'var(--text)' }}>
-                      {item.name}
-                    </span>
-                    <span className="text-[11px] text-slate-400 whitespace-nowrap">
-                      ({item.subItem || item.unit})
-                    </span>
-                    <span className="text-emerald-400 text-xs shrink-0 ml-0.5">➔</span>
+                  {/* 第二行：姓名、單位、職稱 (完全獨立一行，字體清晰，空間充裕，絕不重疊) */}
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-700/30 text-slate-300">
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="font-black text-white text-sm">
+                        {item.name}
+                      </span>
+                      <span className="text-slate-400 text-xs">
+                        {item.unit} {item.subItem ? `· ${item.subItem}` : ''}
+                      </span>
+                    </div>
                   </div>
                 </button>
               ))}
