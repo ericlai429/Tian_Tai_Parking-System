@@ -250,9 +250,9 @@ export default function DashboardView({
     };
   }, [quickPlate]);
 
-  // 即時 2~3 碼 / 模糊過濾候選車輛 (限制：只輸入 1 碼時不動作，防範資料探測蒐集；透過 50ms 防抖保護系統)
+  // 即時 2~3 碼 / 模糊過濾候選車輛 (限制：只輸入 1 碼時不動作，防範資料探測蒐集；2 碼以上即刻極速匹配)
   const candidates = useMemo(() => {
-    const q = debouncedPlate.trim();
+    const q = quickPlate.trim();
     // 嚴格限制：小於 2 碼不觸發過濾，防止單一字元暴力枚舉整批名冊
     if (!q || q.length < 2) return [];
     
@@ -264,16 +264,20 @@ export default function DashboardView({
       const plateDigits = extractDigits(item.plate);
       const passNo = item.passNo ? String(item.passNo) : '';
 
-      // 流水號比對 (至少2碼，如 01, 02, 14...)
+      // 流水號比對 (例如輸入 01, 13, 14 等)
       if (passNo && (passNo === q || passNo === q.padStart(3, '0') || passNo.endsWith(q))) {
         return true;
       }
-      // 純數字比對 (至少 2 碼，例：98, 132, 079)
+      // 純數字比對 (例如輸入 68, 683, 31, 887 等任意 2~3 碼純數字)
       if (qDigits && qDigits.length >= 2 && plateDigits.includes(qDigits)) {
         return true;
       }
-      // 完整或局部車牌比對 (至少2字元)
+      // 完整或局部車牌比對 (去破折號比對，如 6831MR, 6831, 68)
       if (qClean.length >= 2 && plateClean.includes(qClean)) {
+        return true;
+      }
+      // 車牌原始字串比對 (大小寫不拘)
+      if (item.plate.toUpperCase().includes(q.toUpperCase())) {
         return true;
       }
       // 車主姓名模糊搜尋 (至少2字元)
@@ -648,9 +652,9 @@ export default function DashboardView({
         )}
       </div>
 
-      {/* 成功放行提示條 */}
+      {/* 成功放行提示條 (加上 pointer-events-none 避免在浮現時阻擋使用者點擊輸入框或卡片) */}
       {pinSuccessToast && (
-        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-2xl flex items-center gap-2 animate-bounce border border-emerald-400">
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-2xl flex items-center gap-2 animate-bounce border border-emerald-400 pointer-events-none">
           <CheckCircle2 className="w-4 h-4 text-emerald-200" />
           <span>{pinSuccessToast}</span>
         </div>

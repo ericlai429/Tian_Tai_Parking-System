@@ -30,18 +30,27 @@ export default function App() {
     return INITIAL_SCHEDULE_DATA;
   });
 
-  // 停車場名冊資料 (確保 VIP 長官從 001 依序往下排序，統一 3 位數流水號)
+  // 停車場名冊資料 (確保 VIP 長官從 001 依序往下排序，統一 3 位數流水號，並自動補入最新車輛如 6831-MR)
   const [parkingList, setParkingList] = useState(() => {
     const cached = localStorage.getItem('tian_tai_parking_data');
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // 若快取少於預設名冊筆數 (例如新增了保全車輛) 或缺少欄位，以包含新車的清單為主
-          if (parsed.length >= INITIAL_PARKING_DATA.length) {
-            const needsFix = parsed.some(p => !p.passNo || p.passNo.length < 3);
-            if (!needsFix) return parsed;
+          // 檢查是否已包含最新飛龍保全車輛 6831-MR
+          const has6831 = parsed.some(p => (p.plate || '').includes('6831'));
+          if (has6831 && parsed.length >= INITIAL_PARKING_DATA.length) {
+            return parsed;
           }
+          // 若舊快取缺少新車輛，自動與 INITIAL_PARKING_DATA 合併補齊
+          const existingPlates = new Set(parsed.map(p => (p.plate || '').replace(/[\s-]/g, '').toUpperCase()));
+          const missing = INITIAL_PARKING_DATA.filter(p => !existingPlates.has((p.plate || '').replace(/[\s-]/g, '').toUpperCase()));
+          if (missing.length > 0) {
+            const merged = [...parsed, ...missing];
+            localStorage.setItem('tian_tai_parking_data', JSON.stringify(merged));
+            return merged;
+          }
+          return parsed;
         }
       } catch (e) { /* ignore */ }
     }
