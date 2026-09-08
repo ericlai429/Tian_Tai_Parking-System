@@ -336,7 +336,7 @@ export default function ParkingView({
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filterType === 'regular' ? 'bg-indigo-600 text-white' : ''}`}
               style={{ color: filterType === 'regular' ? '#ffffff' : 'var(--text-muted)' }}
             >
-              常駐工程車
+              常駐車輛
             </button>
             <button
               onClick={() => setFilterType('temp')}
@@ -498,7 +498,7 @@ export default function ParkingView({
                     className="w-full px-3 py-2 rounded-lg border font-bold"
                     style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)', color: 'var(--text)' }}
                   >
-                    <option value="regular">常駐工程車</option>
+                    <option value="regular">常駐車輛</option>
                     <option value="vip">👑 長官 / VIP</option>
                     <option value="temp">貨車運補 / 臨時車</option>
                   </select>

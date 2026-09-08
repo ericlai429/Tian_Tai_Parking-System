@@ -95,7 +95,7 @@ export const INITIAL_PARKING_DATA = [
     admin3: "OK"
   },
 
-  // === 常駐工程車與專案同仁 ===
+  // === 常駐車輛與專案同仁 ===
   {
     id: "p_6",
     passNo: "007",
@@ -177,7 +177,7 @@ export const INITIAL_PARKING_DATA = [
     plate: "5T-3120",
     name: "陸惟忠",
     unit: "協力廠商",
-    subItem: "協力工程",
+    subItem: "協力廠商",
     phone: "",
     notes: "",
     type: "regular",
