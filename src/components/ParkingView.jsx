@@ -3,7 +3,8 @@ import {
   Car, Search, CheckCircle2, XCircle, AlertCircle, 
   Upload, Download, Plus, Trash2, Shield, Crown, 
   Phone, User, Building, FileSpreadsheet, Sparkles, Filter,
-  Cloud, RefreshCw, ExternalLink, Lock, Unlock, ChevronLeft, ChevronRight, LogOut
+  Cloud, RefreshCw, ExternalLink, Lock, Unlock, ChevronLeft, ChevronRight, LogOut,
+  X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { parseParkingExcel, exportParkingToExcel } from '../utils/excelHelper';
@@ -415,6 +416,29 @@ export default function ParkingView({
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
+          </div>
+
+          {/* 名冊即時搜尋列 */}
+          <div className="relative w-full">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="快速搜尋車牌、姓名、單位或編號..."
+              className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+              style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)', color: 'var(--text)' }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-white transition-all active:scale-90 cursor-pointer"
+                title="清除名冊搜尋"
+              >
+                <X className="w-3.5 h-3.5 pointer-events-none" />
+              </button>
+            )}
           </div>
 
           {/* 類別標籤篩選列 */}

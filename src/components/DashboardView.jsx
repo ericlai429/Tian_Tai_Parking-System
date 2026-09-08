@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Car, Search, CheckCircle2, XCircle, AlertCircle,
   ExternalLink, Lock, Unlock, ArrowRight, Sparkles, Hash,
-  Camera, Download, Trash2, Clock, Building2, ShieldCheck, KeyRound
+  Camera, Download, Trash2, Clock, Building2, ShieldCheck, KeyRound,
+  X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -16,6 +17,7 @@ export default function DashboardView({
 }) {
   const [quickPlate, setQuickPlate] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [isReleaseLocked, setIsReleaseLocked] = useState(false);
 
   // 保全員放行確認 PIN 碼驗證 (Pin: 888，當班驗證一次即可保持授權)
   const [isSecurityUnlocked, setIsSecurityUnlocked] = useState(() => {
@@ -296,6 +298,10 @@ export default function DashboardView({
 
   // 選中或確認驗證 (若當班已輸入 888 解鎖，直接放行記錄；未解鎖時才彈出 PIN 碼確認視窗)
   const triggerReleaseWithPin = (vehicle) => {
+    if (isReleaseLocked) return;
+    setIsReleaseLocked(true);
+    setTimeout(() => setIsReleaseLocked(false), 1200);
+
     setSelectedVehicle(vehicle);
     setQuickPlate(vehicle.plate);
 
@@ -322,7 +328,7 @@ export default function DashboardView({
 
   const handleQuickSubmit = (e) => {
     e.preventDefault();
-    if (!quickPlate.trim()) return;
+    if (!quickPlate.trim() || isReleaseLocked) return;
 
     if (candidates.length === 1) {
       triggerReleaseWithPin(candidates[0]);
@@ -346,11 +352,15 @@ export default function DashboardView({
 
   // 【不在名冊內 (備查)】：嚴格免保全 PIN 碼，直接以「未登記/外部訪客(備查)」登錄備存至本日進場時間留存清單
   const handleDirectVisitorRecord = () => {
+    if (isReleaseLocked) return;
     const rawInput = quickPlate.trim().toUpperCase();
     if (!rawInput) {
       alert('請先於搜尋框輸入車牌號碼，再點擊「不在名冊內 (備查)」！');
       return;
     }
+
+    setIsReleaseLocked(true);
+    setTimeout(() => setIsReleaseLocked(false), 1200);
 
     const visitorVehicle = {
       plate: rawInput,
@@ -446,7 +456,7 @@ export default function DashboardView({
         {/* 搜尋輸入列 */}
         <form onSubmit={handleQuickSubmit} className="flex flex-col gap-2.5">
           <div className="relative w-full">
-            <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input 
               type="text"
               value={quickPlate}
@@ -455,7 +465,7 @@ export default function DashboardView({
                 if (!e.target.value.trim()) setSelectedVehicle(null);
               }}
               placeholder="輸入車牌或數字 2~3 碼..."
-              className="w-full pl-11 pr-3 py-3 rounded-xl border text-lg font-mono font-black tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
+              className="w-full pl-11 pr-11 py-3 rounded-xl border text-lg font-mono font-black tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
               style={{ 
                 backgroundColor: 'var(--card-hover)', 
                 borderColor: 'var(--card-border)',
@@ -463,23 +473,42 @@ export default function DashboardView({
               }}
               autoFocus
             />
+            {quickPlate && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuickPlate('');
+                  setSelectedVehicle(null);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-700/60 transition-all cursor-pointer active:scale-90 touch-manipulation"
+                title="一鍵清除搜尋字串"
+              >
+                <X className="w-4 h-4 pointer-events-none" />
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button 
               type="submit"
-              className="w-full py-3 rounded-xl font-black text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0 cursor-pointer"
+              disabled={isReleaseLocked}
+              className={`w-full py-3 rounded-xl font-black text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all shrink-0 ${
+                isReleaseLocked ? 'opacity-60 cursor-not-allowed' : 'active:scale-95 cursor-pointer'
+              }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>紀錄 且 放行</span>
+              <span>{isReleaseLocked ? '放行處理中...' : '紀錄 且 放行'}</span>
             </button>
             <button 
               type="button"
+              disabled={isReleaseLocked}
               onClick={handleDirectVisitorRecord}
-              className="w-full py-3 rounded-xl font-black text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 shrink-0 cursor-pointer"
+              className={`w-full py-3 rounded-xl font-black text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/30 flex items-center justify-center gap-2 transition-all shrink-0 ${
+                isReleaseLocked ? 'opacity-60 cursor-not-allowed' : 'active:scale-95 cursor-pointer'
+              }`}
               title="未在名冊內之車輛免保全PIN碼，直接備存登錄進本日留存清單"
             >
               <AlertCircle className="w-4 h-4" />
-              <span>不在名冊內 (備查)</span>
+              <span>{isReleaseLocked ? '記錄處理中...' : '不在名冊內 (備查)'}</span>
             </button>
           </div>
         </form>
@@ -499,8 +528,11 @@ export default function DashboardView({
                 <button
                   key={item.id}
                   type="button"
+                  disabled={isReleaseLocked}
                   onClick={() => handleSelectVehicle(item)}
-                  className="w-full p-2.5 sm:p-3 rounded-xl border transition-all flex flex-col gap-1.5 text-left cursor-pointer active:scale-95 shadow-sm hover:border-indigo-500"
+                  className={`w-full p-2.5 sm:p-3 rounded-xl border transition-all flex flex-col gap-1.5 text-left shadow-sm hover:border-indigo-500 ${
+                    isReleaseLocked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer active:scale-95'
+                  }`}
                   style={{
                     backgroundColor: selectedVehicle?.id === item.id ? 'rgba(79, 70, 229, 0.25)' : 'var(--card-bg)',
                     borderColor: selectedVehicle?.id === item.id ? 'var(--primary)' : 'var(--card-border)',
@@ -738,8 +770,11 @@ export default function DashboardView({
                     </span>
                   </div>
 
-                  <div className="font-mono text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0 whitespace-nowrap">
-                    {log.time}
+                  <div 
+                    className="font-mono text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0 whitespace-nowrap"
+                    title={`完整進場時間：${log.time}`}
+                  >
+                    {log.time && log.time.length > 10 ? log.time.slice(5) : log.time}
                   </div>
                 </div>
               </div>
