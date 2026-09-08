@@ -494,30 +494,47 @@ export default function DashboardView({
               </span>
               <span className="text-[11px] text-slate-400">共 {candidates.length} 筆相符</span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-1.5">
               {candidates.map(item => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => handleSelectVehicle(item)}
-                  className="px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-95"
+                  className="w-full px-3 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-between gap-2 hover:scale-[1.01] active:scale-95 text-left cursor-pointer"
                   style={{
-                    backgroundColor: selectedVehicle?.id === item.id ? 'var(--primary)' : 'var(--card-bg)',
+                    backgroundColor: selectedVehicle?.id === item.id ? 'rgba(79, 70, 229, 0.25)' : 'var(--card-bg)',
                     borderColor: selectedVehicle?.id === item.id ? 'var(--primary)' : 'var(--card-border)',
-                    color: selectedVehicle?.id === item.id ? '#ffffff' : 'var(--text)'
+                    boxShadow: selectedVehicle?.id === item.id ? '0 0 10px rgba(79, 70, 229, 0.3)' : 'none',
+                    color: 'var(--text)'
                   }}
                 >
-                  {item.passNo && (
-                    <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-[11px] font-black">
-                      #{item.passNo}
+                  {/* 左側：證號 + 車牌號碼 (大字、綠字高對比、絕不折行) */}
+                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    {item.passNo && (
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-xs font-black border border-indigo-500/30 whitespace-nowrap">
+                        #{item.passNo}
+                      </span>
+                    )}
+                    <span className="font-mono text-sm sm:text-base font-black tracking-wider text-emerald-400 whitespace-nowrap">
+                      {item.plate}
                     </span>
-                  )}
-                  <span className="font-mono text-sm tracking-wider font-black text-emerald-400">
-                    {item.plate}
-                  </span>
-                  <span>{item.name}</span>
-                  <span className="text-[11px] opacity-75">({item.subItem || item.unit})</span>
-                  {item.type === 'vip' && <span className="text-[10px] text-amber-300">👑VIP</span>}
+                    {item.type === 'vip' && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 whitespace-nowrap">
+                        👑VIP
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 右側：人員姓名 + 單位/職稱 (右對齊、單行完整呈現) */}
+                  <div className="flex items-center gap-1 min-w-0 text-xs font-bold justify-end text-right">
+                    <span className="whitespace-nowrap font-black" style={{ color: 'var(--text)' }}>
+                      {item.name}
+                    </span>
+                    <span className="text-[11px] text-slate-400 whitespace-nowrap">
+                      ({item.subItem || item.unit})
+                    </span>
+                    <span className="text-emerald-400 text-xs shrink-0 ml-0.5">➔</span>
+                  </div>
                 </button>
               ))}
             </div>
