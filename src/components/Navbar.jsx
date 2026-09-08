@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Shield, Calendar, Car, Cloud, Moon, Sun, 
-  Home, RefreshCw, Layers, Lock, Unlock, KeyRound, CreditCard 
+  Home, RefreshCw, Layers, Lock, Unlock, KeyRound, CreditCard, LogOut 
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -12,6 +12,7 @@ export default function Navbar({
   cloudStatus,
   isAdmin,
   onAdminToggle,
+  onAdminLogout,
   onOpenPassCard
 }) {
   // 主要 3 大功能分頁 (訪客與管理者通用，3 等分滿版適應手機，絕不炸框)
@@ -62,40 +63,49 @@ export default function Navbar({
               <span className="hidden sm:inline">停車証</span>
             </button>
 
-            {/* 後台管理員登入切換鈕 (密碼: t1898，鑰匙圖示，移除文字) */}
-            <button
-              onClick={onAdminToggle}
-              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                isAdmin 
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs hover:bg-amber-500/30' 
-                  : 'text-slate-400 border-slate-700 hover:bg-slate-800/30'
-              }`}
-              title={isAdmin ? "管理員已登入 (點擊登出)" : "後台登入 (點擊輸入密碼)"}
-            >
-              {isAdmin ? (
-                <KeyRound className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              ) : (
-                <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              )}
-            </button>
-
-            {/* 雲端對接設定入口 (嚴格僅 Admin 可見且可點擊，訪客完全不可見) */}
-            {isAdmin && (
+            {/* 訪客模式：顯示後台登入按鈕；管理員模式：顯示雲端與登出按鈕 */}
+            {!isAdmin ? (
               <button
-                onClick={() => setActiveTab('cloud')}
-                className={`flex items-center gap-1 text-[11px] px-1.5 py-1 rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
-                  activeTab === 'cloud' ? 'ring-1 ring-emerald-400 bg-emerald-500/20 text-emerald-300' : ''
-                }`}
-                style={{ 
-                  borderColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.4)' : 'var(--card-border)',
-                  backgroundColor: activeTab === 'cloud' ? 'rgba(16, 185, 129, 0.2)' : (cloudStatus.connected ? 'rgba(16, 185, 129, 0.1)' : 'transparent'),
-                  color: cloudStatus.connected ? '#10b981' : 'var(--text-dim)'
-                }}
-                title="雲端試算表對接設定 (Admin 專屬)"
+                onClick={onAdminToggle}
+                className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border text-slate-400 border-slate-700 hover:bg-slate-800/30 transition-all cursor-pointer whitespace-nowrap active:scale-95"
+                title="點擊輸入密碼登入後台管理員"
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${cloudStatus.connected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
-                <span className="font-semibold">{cloudStatus.connected ? '雲端' : '本地'}</span>
+                <KeyRound className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>後台</span>
               </button>
+            ) : (
+              <>
+                {/* 雲端對接設定入口 (嚴格僅 Admin 登入後可見且可點擊，訪客完全不可見) */}
+                <button
+                  onClick={() => setActiveTab('cloud')}
+                  className={`flex items-center gap-1 text-[11px] px-1.5 sm:px-2 py-1 rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
+                    activeTab === 'cloud' ? 'ring-1 ring-emerald-400 bg-emerald-500/20 text-emerald-300' : ''
+                  }`}
+                  style={{ 
+                    borderColor: cloudStatus.connected ? 'rgba(16, 185, 129, 0.4)' : 'var(--card-border)',
+                    backgroundColor: activeTab === 'cloud' ? 'rgba(16, 185, 129, 0.2)' : (cloudStatus.connected ? 'rgba(16, 185, 129, 0.1)' : 'transparent'),
+                    color: cloudStatus.connected ? '#10b981' : 'var(--text-dim)'
+                  }}
+                  title="雲端試算表對接設定"
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${cloudStatus.connected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                  <span className="font-semibold">{cloudStatus.connected ? '雲端' : '本地'}</span>
+                </button>
+
+                {/* 管理員專用登出按鈕 (極致醒目，點擊立即登出回到訪客狀態) */}
+                <button
+                  onClick={() => {
+                    if (window.confirm('確定要登出管理員身分嗎？登出後將切換為訪客模式。')) {
+                      onAdminLogout ? onAdminLogout() : onAdminToggle();
+                    }
+                  }}
+                  className="flex items-center gap-1 text-[11px] px-1.5 sm:px-2 py-1 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/25 transition-all cursor-pointer whitespace-nowrap font-bold active:scale-95 shadow-xs"
+                  title="點擊登出管理員，切換回一般訪客身分"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  <span>登出</span>
+                </button>
+              </>
             )}
 
             {/* 主題切換按鈕 */}

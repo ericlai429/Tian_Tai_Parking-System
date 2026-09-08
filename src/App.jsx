@@ -155,13 +155,8 @@ export default function App() {
           setIsDarkMode={setIsDarkMode}
           cloudStatus={cloudStatus}
           isAdmin={isAdmin}
-          onAdminToggle={() => {
-            if (isAdmin) {
-              handleAdminLogout();
-            } else {
-              setShowAdminModal(true);
-            }
-          }}
+          onAdminToggle={() => setShowAdminModal(true)}
+          onAdminLogout={handleAdminLogout}
           onOpenPassCard={handlePassCardClick}
         />
 
@@ -200,6 +195,7 @@ export default function App() {
             onOpenCloudSync={() => setActiveTab('cloud')}
             isAdmin={isAdmin}
             onRequireAdmin={() => setShowAdminModal(true)}
+            onLogout={handleAdminLogout}
           />
         )}
 
@@ -219,6 +215,7 @@ export default function App() {
             setCloudStatus={setCloudStatus}
             isAdmin={isAdmin}
             onRequireAdmin={() => setShowAdminModal(true)}
+            onLogout={handleAdminLogout}
           />
         )}
       </main>

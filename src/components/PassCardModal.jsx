@@ -79,13 +79,21 @@ function ParkingCardUnit({ card, cardStyle, className = '' }) {
               <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest px-3 py-1.5 rounded-md border-2 border-sky-500 bg-sky-50/50 text-slate-950 shadow-sm inline-block w-[92%] whitespace-nowrap">
                 {card.plate}
               </div>
-              <div className="flex flex-col items-center justify-center gap-1 pt-0.5">
+              <div className="flex flex-col items-center justify-center gap-1 pt-0.5 px-1">
                 <span className="px-3 py-0.5 rounded-sm bg-sky-100 border border-sky-300 text-sky-950 font-black text-xs sm:text-sm tracking-wide shadow-xs">
                   {card.unit}
                 </span>
-                <div className="flex items-center justify-center gap-1.5 text-sm sm:text-base font-black text-slate-900">
-                  <span>{card.name}</span>
-                  <span className="text-slate-600 font-bold text-xs sm:text-sm">({card.subItem})</span>
+                <div className="flex flex-wrap items-center justify-center gap-1 text-center max-w-full">
+                  <span className={`font-black text-slate-900 ${
+                    (card.name || '').length > 7 ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'
+                  }`}>
+                    {card.name}
+                  </span>
+                  {card.subItem && (
+                    <span className="text-slate-600 font-bold text-xs sm:text-sm whitespace-nowrap">
+                      ({card.subItem})
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -131,8 +139,17 @@ function ParkingCardUnit({ card, cardStyle, className = '' }) {
                   {card.plate}
                 </div>
               </div>
-              <div className="text-base font-black text-slate-900 whitespace-nowrap">
-                {card.name} <span className="text-indigo-700 text-sm">【{card.subItem}】</span>
+              <div className="flex flex-wrap items-center justify-center gap-1 text-center px-1 max-w-full">
+                <span className={`font-black text-slate-900 ${
+                  (card.name || '').length > 7 ? 'text-sm sm:text-base' : 'text-base sm:text-lg'
+                }`}>
+                  {card.name}
+                </span>
+                {card.subItem && (
+                  <span className="text-indigo-700 text-xs sm:text-sm font-bold whitespace-nowrap">
+                    【{card.subItem}】
+                  </span>
+                )}
               </div>
             </div>
             <div className="p-3 bg-indigo-50/50 border-t-2 border-indigo-200 space-y-1.5 mt-auto">
@@ -147,7 +164,7 @@ function ParkingCardUnit({ card, cardStyle, className = '' }) {
         )}
 
         {/* ========================================================= */}
-        {/* 版本 3：滿版高對比工程版 (modernGrid) */}
+        {/* 版本 3：滿版高對比工程版 (modernGrid - 解決李健宏/總工程師裁切問題) */}
         {/* ========================================================= */}
         {cardStyle === 'modernGrid' && (
           <div className="pass-card w-full rounded-md flex flex-col justify-between relative shadow-md overflow-hidden bg-white text-slate-900 border-4 border-slate-900 z-10" style={{ minHeight: '380px' }}>
@@ -175,13 +192,20 @@ function ParkingCardUnit({ card, cardStyle, className = '' }) {
                 {card.plate}
               </div>
               <div className="grid grid-cols-2 gap-2 text-left pt-1">
-                <div className="bg-slate-100 p-2 rounded-sm border border-slate-200">
+                <div className="bg-slate-100 p-2 rounded-sm border border-slate-200 flex flex-col justify-center">
                   <div className="text-[10px] font-bold text-slate-500">所屬廠商/單位</div>
-                  <div className="font-black text-xs text-slate-900 truncate">{card.unit}</div>
+                  <div className="font-black text-xs text-slate-900 break-words leading-tight mt-0.5">
+                    {card.unit}
+                  </div>
                 </div>
-                <div className="bg-slate-100 p-2 rounded-sm border border-slate-200">
+                <div className="bg-slate-100 p-2 rounded-sm border border-slate-200 flex flex-col justify-center">
                   <div className="text-[10px] font-bold text-slate-500">人員 / 職稱</div>
-                  <div className="font-black text-xs text-slate-900 truncate">{card.name} ({card.subItem})</div>
+                  <div className="font-black text-xs text-slate-900 break-words leading-tight mt-0.5">
+                    <div>{card.name}</div>
+                    {card.subItem && (
+                      <div className="text-[10.5px] font-bold text-amber-700">({card.subItem})</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -196,7 +220,7 @@ function ParkingCardUnit({ card, cardStyle, className = '' }) {
         )}
 
         {/* ========================================================= */}
-        {/* 版本 4：極致大字填滿版 (compactMax) */}
+        {/* 版本 4：極致大字填滿版 (compactMax - 智能換行縮放，絕不炸框) */}
         {/* ========================================================= */}
         {cardStyle === 'compactMax' && (
           <div className="pass-card w-full rounded-md flex flex-col justify-between p-3 relative shadow-md overflow-hidden bg-white text-slate-900 border-3 border-emerald-600 z-10" style={{ minHeight: '380px' }}>
@@ -211,8 +235,23 @@ function ParkingCardUnit({ card, cardStyle, className = '' }) {
               <div className="font-mono font-black text-2xl sm:text-3xl tracking-widest text-emerald-950 bg-emerald-50 py-2.5 px-2 rounded-md border-3 border-emerald-600 shadow-md whitespace-nowrap inline-block max-w-full">
                 {card.plate}
               </div>
-              <div className="text-base sm:text-lg font-black text-slate-900 pt-1 whitespace-nowrap">
-                {card.unit} · {card.name} <span className="text-sm font-bold text-emerald-700">({card.subItem})</span>
+              {/* 單位與人員職稱：分層智能換行與彈性自適應，徹底杜絕炸框 */}
+              <div className="flex flex-col items-center justify-center gap-1.5 pt-1 px-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-950 font-black text-xs tracking-wide">
+                  {card.unit}
+                </span>
+                <div className="flex flex-wrap items-center justify-center gap-1 text-center max-w-full">
+                  <span className={`font-black text-slate-950 tracking-tight leading-snug ${
+                    (card.name || '').length > 7 ? 'text-sm sm:text-base' : 'text-base sm:text-lg'
+                  }`}>
+                    {card.name}
+                  </span>
+                  {card.subItem && (
+                    <span className="text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                      ({card.subItem})
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="border-t-2 border-emerald-500 pt-2 space-y-1 mt-auto">

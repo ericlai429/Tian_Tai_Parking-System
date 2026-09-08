@@ -3,7 +3,7 @@ import {
   Car, Search, CheckCircle2, XCircle, AlertCircle, 
   Upload, Download, Plus, Trash2, Shield, Crown, 
   Phone, User, Building, FileSpreadsheet, Sparkles, Filter,
-  Cloud, RefreshCw, ExternalLink, Lock, Unlock, ChevronLeft, ChevronRight
+  Cloud, RefreshCw, ExternalLink, Lock, Unlock, ChevronLeft, ChevronRight, LogOut
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { parseParkingExcel, exportParkingToExcel } from '../utils/excelHelper';
@@ -16,7 +16,8 @@ export default function ParkingView({
   onOpenCloudSync,
   setCloudStatus,
   isAdmin,
-  onRequireAdmin
+  onRequireAdmin,
+  onLogout
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all'); // all, vip, regular, temp
@@ -301,7 +302,20 @@ export default function ParkingView({
             </span>
           </div>
 
-          {!isAdmin && (
+          {isAdmin ? (
+            <button
+              onClick={() => {
+                if (window.confirm('確定要登出管理員身分嗎？登出後將切換為訪客模式。')) {
+                  onLogout && onLogout();
+                }
+              }}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 flex items-center gap-1 transition-all cursor-pointer shadow-xs active:scale-95 whitespace-nowrap"
+              title="點擊登出管理員身分"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span>登出管理</span>
+            </button>
+          ) : (
             <button
               onClick={() => exportParkingToExcel(parkingList)}
               disabled={parkingList.length === 0}

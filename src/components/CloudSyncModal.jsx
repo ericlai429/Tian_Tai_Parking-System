@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Cloud, RefreshCw, CheckCircle2, AlertCircle, 
-  ExternalLink, Save, Database, Shield, Lock, FileSpreadsheet 
+  ExternalLink, Save, Database, Shield, Lock, FileSpreadsheet, LogOut 
 } from 'lucide-react';
 import { fetchCloudParkingData } from '../utils/cloudSheetHelper';
 import confetti from 'canvas-confetti';
@@ -14,7 +14,8 @@ export default function CloudSyncModal({
   cloudStatus, 
   setCloudStatus,
   isAdmin,
-  onRequireAdmin
+  onRequireAdmin,
+  onLogout
 }) {
   const [parkingUrl, setParkingUrl] = useState(cloudConfig.parkingUrl);
   const [scheduleFolderUrl, setScheduleFolderUrl] = useState(cloudConfig.scheduleFolderUrl || '');
@@ -76,15 +77,33 @@ export default function CloudSyncModal({
             </div>
           </div>
 
-          <a
-            href={parkingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md flex items-center gap-1.5 transition-all shrink-0"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>開表 (Admin)</span>
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={parkingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md flex items-center gap-1.5 transition-all"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>開表 (Admin)</span>
+            </a>
+
+            {onLogout && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('確定要登出管理員身分嗎？')) {
+                    onLogout();
+                  }
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/40 shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
+                title="登出管理者身分，切換回一般訪客"
+              >
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <span>登出</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
