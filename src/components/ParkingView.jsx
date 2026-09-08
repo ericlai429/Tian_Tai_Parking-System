@@ -343,7 +343,7 @@ export default function ParkingView({
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filterType === 'temp' ? 'bg-indigo-600 text-white' : ''}`}
               style={{ color: filterType === 'temp' ? '#ffffff' : 'var(--text-muted)' }}
             >
-              貨車 / 運補
+              貨車&重機械
             </button>
           </div>
         </div>
@@ -391,7 +391,7 @@ export default function ParkingView({
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
                         : (item.type === 'temp' ? 'bg-sky-500/20 text-sky-300' : 'bg-slate-500/20 text-slate-300')
                     }`}>
-                      {item.type === 'vip' ? '👑 VIP長官' : (item.type === 'temp' ? '貨車運補' : '常駐固定')}
+                      {item.type === 'vip' ? '👑 VIP長官' : (item.type === 'temp' ? '貨車&重機械' : '常駐固定')}
                     </span>
                   </td>
                   <td className="p-3 text-center whitespace-nowrap">
@@ -500,7 +500,7 @@ export default function ParkingView({
                   >
                     <option value="regular">常駐車輛</option>
                     <option value="vip">👑 長官 / VIP</option>
-                    <option value="temp">貨車運補 / 臨時車</option>
+                    <option value="temp">貨車&重機械</option>
                   </select>
                 </div>
               </div>

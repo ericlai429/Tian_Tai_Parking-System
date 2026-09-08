@@ -187,7 +187,7 @@ export const INITIAL_PARKING_DATA = [
     admin3: ""
   },
 
-  // === 工程物料運補貨車 ===
+  // === 貨車&重機械 ===
   {
     id: "p_14",
     passNo: "013",
