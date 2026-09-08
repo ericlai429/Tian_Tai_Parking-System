@@ -240,76 +240,132 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                       A4 第 {pageIdx + 1} 頁 (共 {Math.ceil(cardDataList.length / 4)} 頁)
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3.5 h-full">
+                    <div className="grid grid-cols-2 gap-4 h-full">
                       {pageCards.map((card, cIdx) => (
                         <div
                           key={cIdx}
-                          className="pass-card rounded-xl flex flex-col justify-between p-4 relative shadow-sm overflow-hidden border-2 border-sky-400 bg-white text-slate-900"
+                          className="relative flex items-center justify-center p-3.5 border border-dashed border-slate-300 rounded-2xl bg-slate-50/50"
                           style={{ minHeight: '450px' }}
                         >
-                          {/* 頂部裝飾條 */}
-                          <div className="absolute top-0 left-0 right-0 h-2 bg-sky-600"></div>
+                          {/* 上方橫式留白提示 */}
+                          <div className="absolute top-1 left-0 right-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-[10px] font-mono font-bold tracking-widest text-slate-400 bg-white/80 px-2 py-0.5 rounded border border-slate-200">
+                              ✂ 裁切區，護背留白
+                            </span>
+                          </div>
 
-                          {/* 頂部：公司標題與流水號 (單行不折行 whitespace-nowrap，字體清晰大器) */}
-                          <div className="space-y-1.5 mt-1 border-b-2 border-sky-300/80 pb-2.5">
-                            <div className="flex items-center justify-between gap-1.5">
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <div className="w-6 h-6 rounded-md bg-sky-700 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
-                                  天
+                          {/* 下方橫式留白提示 */}
+                          <div className="absolute bottom-1 left-0 right-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-[10px] font-mono font-bold tracking-widest text-slate-400 bg-white/80 px-2 py-0.5 rounded border border-slate-200">
+                              ✂ 裁切區，護背留白
+                            </span>
+                          </div>
+
+                          {/* 左側直式留白提示 */}
+                          <div className="absolute left-1 top-0 bottom-0 flex items-center justify-center pointer-events-none">
+                            <span 
+                              className="text-[10px] font-mono font-bold tracking-widest text-slate-400 bg-white/80 px-1 py-1 rounded border border-slate-200"
+                              style={{ writingMode: 'vertical-rl' }}
+                            >
+                              ✂ 裁切區，護背留白
+                            </span>
+                          </div>
+
+                          {/* 右側直式留白提示 */}
+                          <div className="absolute right-1 top-0 bottom-0 flex items-center justify-center pointer-events-none">
+                            <span 
+                              className="text-[10px] font-mono font-bold tracking-widest text-slate-400 bg-white/80 px-1 py-1 rounded border border-slate-200"
+                              style={{ writingMode: 'vertical-rl' }}
+                            >
+                              ✂ 裁切區，護背留白
+                            </span>
+                          </div>
+
+                          {/* 核心實體停車証卡片 (尺寸微縮88%，留出足夠護背膜封邊空間) */}
+                          <div
+                            className={`pass-card w-[86%] rounded-xl flex flex-col justify-between p-3.5 relative shadow-md overflow-hidden bg-white text-slate-900 border-2 ${
+                              cardStyle === 'boldBadge' 
+                                ? 'border-indigo-600' 
+                                : cardStyle === 'modernGrid'
+                                ? 'border-slate-800'
+                                : cardStyle === 'compactMax'
+                                ? 'border-emerald-600'
+                                : 'border-sky-500'
+                            }`}
+                            style={{ minHeight: '380px' }}
+                          >
+                            {/* 頂部彩色飾條 */}
+                            <div className={`absolute top-0 left-0 right-0 h-2 ${
+                              cardStyle === 'boldBadge' 
+                                ? 'bg-indigo-700' 
+                                : cardStyle === 'modernGrid'
+                                ? 'bg-slate-900'
+                                : cardStyle === 'compactMax'
+                                ? 'bg-emerald-600'
+                                : 'bg-sky-600'
+                            }`}></div>
+
+                            {/* 頂部：公司標題與流水號 (單行不折行 whitespace-nowrap) */}
+                            <div className="space-y-1 mt-0.5 border-b-2 border-sky-300/80 pb-2">
+                              <div className="flex items-center justify-between gap-1">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <div className="w-5 h-5 rounded-md bg-sky-700 text-white font-black text-[11px] flex items-center justify-center shadow-xs shrink-0">
+                                    天
+                                  </div>
+                                  <span className="font-black text-[14px] tracking-tight text-slate-950 whitespace-nowrap">
+                                    天泰營造股份有限公司
+                                  </span>
                                 </div>
-                                <span className="font-black text-[15px] sm:text-[17px] tracking-tight text-slate-950 whitespace-nowrap">
-                                  天泰營造股份有限公司
+                                <span className="font-mono font-black text-xs px-2 py-0.5 rounded-md bg-sky-700 text-white shadow-xs shrink-0 whitespace-nowrap">
+                                  證號 #{card.passNo}
                                 </span>
                               </div>
-                              <span className="font-mono font-black text-xs sm:text-sm px-2 py-0.5 rounded-md bg-sky-700 text-white shadow-xs shrink-0 whitespace-nowrap">
-                                證號 #{card.passNo}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between font-black text-sky-800 tracking-wider">
-                              <span className="text-xs sm:text-sm whitespace-nowrap">工區專用車輛停車許可證</span>
-                              <span className="text-[11px] sm:text-xs tracking-widest text-sky-600 font-mono whitespace-nowrap">PARKING PERMIT</span>
-                            </div>
-                          </div>
-
-                          {/* 中部核心車牌與人員展示區 (四周不留多餘空白，緊湊飽滿) */}
-                          <div className="my-auto py-2 text-center space-y-3">
-                            <div className="text-xs font-black text-sky-900 tracking-wider">
-                              核准通行車牌號碼
-                            </div>
-                            <div 
-                              className="font-mono font-black text-3xl sm:text-4xl tracking-widest px-4 py-2.5 rounded-xl border-3 border-sky-500 bg-white text-slate-950 shadow-md inline-block w-[88%]"
-                            >
-                              {card.plate}
-                            </div>
-                            
-                            {/* 人員與單位資料欄：字體放大 1.5 倍，層次分明 */}
-                            <div className="flex flex-col items-center justify-center gap-1.5 pt-1">
-                              {/* 單位名稱 (放大 1.5 倍) */}
-                              <span className="px-3.5 py-1 rounded-lg bg-sky-100 border border-sky-300 text-sky-950 font-black text-sm sm:text-base tracking-wide shadow-xs">
-                                {card.unit}
-                              </span>
-                              {/* 姓名與職稱 (放大 1.5 倍) */}
-                              <div className="flex items-center justify-center gap-2 text-base sm:text-lg font-black text-slate-900">
-                                <span>{card.name}</span>
-                                <span className="text-slate-600 font-bold text-sm sm:text-base">({card.subItem})</span>
+                              <div className="flex items-center justify-between font-black text-sky-800 tracking-wider">
+                                <span className="text-[11px] whitespace-nowrap">工區專用車輛停車許可證</span>
+                                <span className="text-[10px] tracking-widest text-sky-600 font-mono whitespace-nowrap">PARKING PERMIT</span>
                               </div>
                             </div>
-                          </div>
 
-                          {/* 下方手寫手機號碼空白欄位 */}
-                          <div className="space-y-2 border-t-2 border-sky-300/80 pt-2.5 mt-auto">
-                            <div className="flex items-center justify-between text-xs sm:text-sm font-black text-slate-800">
-                              <span>聯絡手機號碼：</span>
-                              <span className="text-[11px] text-slate-500 font-normal">（必填，臨時移車聯絡用）</span>
-                            </div>
-                            {/* 手寫底線空白欄位 (無預填，整條留白供自由書寫) */}
-                            <div className="w-full h-8 border-b-2 border-dashed border-slate-500 flex items-center justify-center text-xs text-slate-300 font-mono tracking-widest">
-                              &nbsp;
+                            {/* 中部核心車牌與人員展示區 */}
+                            <div className="my-auto py-1.5 text-center space-y-2">
+                              <div className="text-[11px] font-black text-sky-900 tracking-wider">
+                                核准通行車牌號碼
+                              </div>
+                              <div 
+                                className="font-mono font-black text-2xl sm:text-3xl tracking-widest px-3 py-1.5 rounded-xl border-2 border-sky-500 bg-white text-slate-950 shadow-sm inline-block w-[92%]"
+                              >
+                                {card.plate}
+                              </div>
+                              
+                              {/* 人員與單位資料欄：字體放大 1.5 倍，層次分明 */}
+                              <div className="flex flex-col items-center justify-center gap-1 pt-0.5">
+                                {/* 單位名稱 */}
+                                <span className="px-3 py-0.5 rounded-md bg-sky-100 border border-sky-300 text-sky-950 font-black text-xs sm:text-sm tracking-wide shadow-xs">
+                                  {card.unit}
+                                </span>
+                                {/* 姓名與職稱 */}
+                                <div className="flex items-center justify-center gap-1.5 text-sm sm:text-base font-black text-slate-900">
+                                  <span>{card.name}</span>
+                                  <span className="text-slate-600 font-bold text-xs sm:text-sm">({card.subItem})</span>
+                                </div>
+                              </div>
                             </div>
 
-                            <div className="text-[10px] text-slate-600 leading-tight space-y-0.5 pt-0.5 font-medium">
-                              <div>1. 本停車証請置放於車輛擋風玻璃前明顯處以備警衛查驗。</div>
-                              <div>2. 進入工區請減速慢行 (限速 15km/h)，遵從警衛及指揮人員引導。</div>
+                            {/* 下方手寫手機號碼空白欄位 */}
+                            <div className="space-y-1.5 border-t-2 border-sky-300/80 pt-2 mt-auto">
+                              <div className="flex items-center justify-between text-xs font-black text-slate-800">
+                                <span>聯絡手機號碼：</span>
+                                <span className="text-[10px] text-slate-500 font-normal">（必填，臨時移車用）</span>
+                              </div>
+                              {/* 手寫底線空白欄位 (無預填，整條留白供自由書寫) */}
+                              <div className="w-full h-7 border-b-2 border-dashed border-slate-500 flex items-center justify-center text-xs text-slate-300 font-mono tracking-widest">
+                                &nbsp;
+                              </div>
+
+                              <div className="text-[9.5px] text-slate-600 leading-tight space-y-0.5 pt-0.5 font-medium">
+                                <div>1. 請置放於擋風玻璃前明顯處以備警衛查驗。</div>
+                                <div>2. 工區內請減速慢行 (限速 15km/h)，遵從引導。</div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -318,7 +374,7 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
                       {pageCards.length < 4 && Array.from({ length: 4 - pageCards.length }).map((_, emptyIdx) => (
                         <div 
                           key={`empty_${emptyIdx}`}
-                          className="border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-xs text-slate-300 min-h-[440px]"
+                          className="border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center text-xs text-slate-300 min-h-[450px]"
                         >
                           （A4 四等分空白卡位）
                         </div>
@@ -357,7 +413,7 @@ export default function PassCardModal({ isOpen, onClose, parkingList }) {
             height: 100vh !important;
             min-height: 100vh !important;
             margin: 0 !important;
-            padding: 8mm !important;
+            padding: 6mm !important;
             box-shadow: none !important;
             border: none !important;
             page-break-after: always !important;
