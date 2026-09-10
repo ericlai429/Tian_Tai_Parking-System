@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -250,7 +251,16 @@ async function runSync() {
       console.log('----------------------------------------------------------------------');
     }
 
-    console.log('\n✔ 所有同步與版本校驗工作已圓滿就緒！\n');
+    // 在背景自動為使用者彈出「雲端試算表副本」檔案總管視窗
+    try {
+      exec(`explorer "${outputDir}"`);
+    } catch {
+      // 忽略開啟視窗錯誤
+    }
+
+    console.log('\n✔ 所有同步與版本校驗工作已圓滿就緒！');
+    console.log('📁 檔案總管已自動開啟副本目錄。');
+    console.log('📌 請確認上方報告資訊。確認完畢後，請按任意鍵關閉此視窗...\n');
   } catch (err) {
     console.error('\n❌ 同步中止：', err.message);
     process.exitCode = 1;
