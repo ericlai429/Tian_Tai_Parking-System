@@ -41,7 +41,7 @@ export default function CloudSyncModal({
         text: `連線成功！成功探測到「工地工區大門－車輛管制」，讀取到 ${vehicles.length} 筆有效車牌資料。`
       });
       // 儲存配置
-      const newCfg = { ...cloudConfig, parkingUrl, scheduleFolderUrl };
+      const newCfg = { ...cloudConfig, parkingUrl, scheduleUrl, scheduleFolderUrl: scheduleUrl };
       setCloudConfig(newCfg);
       localStorage.setItem('tian_tai_cloud_config', JSON.stringify(newCfg));
       setCloudStatus({ connected: true, lastSync: new Date().toLocaleTimeString() });

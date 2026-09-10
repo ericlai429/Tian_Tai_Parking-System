@@ -146,7 +146,8 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
   };
 
   const getWeekdayName = (d) => {
-    return scheduleData.dayNames[(d + 1) % 7];
+    const names = scheduleData?.dayNames || ["日", "一", "二", "三", "四", "五", "六"];
+    return names[(d + 1) % 7] || '';
   };
 
   // 下載 Door_list 原尺寸照片
@@ -348,7 +349,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
             </thead>
 
             <tbody>
-              {scheduleData.guards.map((guard) => (
+              {(scheduleData?.guards || []).map((guard) => (
                 <tr key={guard.id} className="border-b hover:bg-slate-800/10 transition-colors" style={{ borderColor: 'var(--card-border)' }}>
                   {/* 班別 */}
                   <td className="p-2 font-sans font-bold text-center sticky left-0 z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-bg)', color: 'var(--text)' }}>
@@ -365,8 +366,9 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                   </td>
 
                   {/* 每日班別格子 */}
-                  {Array.from({ length: scheduleData.daysInMonth }, (_, i) => i + 1).map(d => {
-                    const shift = guard.shifts[d] || '';
+                  {Array.from({ length: scheduleData?.daysInMonth || 30 }, (_, i) => i + 1).map(d => {
+                    const shifts = guard.shifts || {};
+                    const shift = shifts[d] || '';
                     const isSpecialPink = (guard.id === 'g3' && d === 11) || (guard.specialNotes && guard.specialNotes[d]?.type === 'substitute');
                     const weekend = isWeekendDay(d);
                     const isToday = d === todayDay;

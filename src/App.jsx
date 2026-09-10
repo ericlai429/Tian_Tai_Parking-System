@@ -34,9 +34,14 @@ export default function App() {
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        // 若快取符合最新官方定案 (賴鯤仲 144 小時)，維持快取；若為舊草案 (192 小時)，自動更新為最新官方班表
+        // 若快取符合最新官方定案 (賴鯤仲 144 小時)，補齊可能缺漏的 dayNames 與 shiftTypes 並維持快取
         if (parsed && Array.isArray(parsed.guards) && parsed.guards[0]?.targetHours === 144) {
-          return parsed;
+          return {
+            ...INITIAL_SCHEDULE_DATA,
+            ...parsed,
+            dayNames: parsed.dayNames || INITIAL_SCHEDULE_DATA.dayNames,
+            shiftTypes: parsed.shiftTypes || INITIAL_SCHEDULE_DATA.shiftTypes
+          };
         }
       } catch (e) { /* ignore */ }
     }
@@ -53,10 +58,10 @@ export default function App() {
       try {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // 檢查 001 或第一筆是否為 CCN-1898 鄭全欽/謝佳蓉，若舊快取順序錯誤則捨棄舊快取採用最新 INITIAL_PARKING_DATA
+          // 檢查 001 是否正確，且快取筆數不少於最新初始名冊（若有新加入的車牌則自動採用最新名冊）
           const firstItem = parsed[0] || {};
           const isFirstCorrect = (firstItem.plate || '').toUpperCase().includes('1898') || (firstItem.name || '').includes('鄭全欽');
-          if (isFirstCorrect) {
+          if (isFirstCorrect && parsed.length >= INITIAL_PARKING_DATA.length) {
             return parsed;
           }
         }

@@ -186,10 +186,55 @@ export const INITIAL_PARKING_DATA = [
     admin2: "",
     admin3: ""
   },
+  {
+    id: "p_19",
+    passNo: "013",
+    plate: "RFV-2826",
+    name: "陳皇龍",
+    unit: "量子輻射",
+    subItem: "副總",
+    phone: "",
+    notes: "量子輻射 副總",
+    type: "vip",
+    status: "pass",
+    admin1: "OK",
+    admin2: "OK",
+    admin3: "OK"
+  },
+  {
+    id: "p_20",
+    passNo: "014",
+    plate: "RFY-7266",
+    name: "公務車輛",
+    unit: "量子輻射",
+    subItem: "副總",
+    phone: "",
+    notes: "量子輻射 副總",
+    type: "regular",
+    status: "pass",
+    admin1: "OK",
+    admin2: "",
+    admin3: ""
+  },
+  {
+    id: "p_21",
+    passNo: "015",
+    plate: "BQY-7008",
+    name: "徐技師",
+    unit: "汙水廠商",
+    subItem: "技師",
+    phone: "",
+    notes: "汙水廠商 技師",
+    type: "regular",
+    status: "pass",
+    admin1: "OK",
+    admin2: "",
+    admin3: ""
+  },
 
   {
     id: "p_17",
-    passNo: "013",
+    passNo: "016",
     plate: "6831-MR",
     name: "賴宗興",
     unit: "飛龍保全",
@@ -204,7 +249,7 @@ export const INITIAL_PARKING_DATA = [
   },
   {
     id: "p_18",
-    passNo: "014",
+    passNo: "017",
     plate: "BHN-8875",
     name: "賴鯤仲",
     unit: "飛龍保全",
@@ -221,7 +266,7 @@ export const INITIAL_PARKING_DATA = [
   // === 貨車&重機械 ===
   {
     id: "p_14",
-    passNo: "015",
+    passNo: "018",
     plate: "CCF-3089",
     name: "永瀚貨車 (1)",
     unit: "永瀚機電",
@@ -236,7 +281,7 @@ export const INITIAL_PARKING_DATA = [
   },
   {
     id: "p_15",
-    passNo: "016",
+    passNo: "019",
     plate: "0159-A6",
     name: "永瀚貨車 (2)",
     unit: "永瀚機電",

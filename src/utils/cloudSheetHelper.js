@@ -3,14 +3,9 @@ import * as XLSX from 'xlsx';
 /**
  * 將 Google Sheets 試算表分享網址轉化為直接可抓取之 CSV 串流網址
  */
-export function normalizeGoogleSheetUrl(rawUrl, useExport = true) {
+export function normalizeGoogleSheetUrl(rawUrl, preferGviz = true) {
   if (!rawUrl || typeof rawUrl !== 'string') return '';
   const trimmed = rawUrl.trim();
-
-  // 若已經是 CSV 連結
-  if (trimmed.includes('out:csv') || trimmed.includes('format=csv')) {
-    return trimmed;
-  }
 
   // 匹配 Google Spreadsheet ID 與 gid
   const docMatch = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
@@ -19,10 +14,10 @@ export function normalizeGoogleSheetUrl(rawUrl, useExport = true) {
   if (docMatch && docMatch[1]) {
     const docId = docMatch[1];
     const gid = gidMatch && gidMatch[1] ? gidMatch[1] : '0';
-    if (useExport) {
-      return `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=${gid}`;
+    if (preferGviz) {
+      return `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&gid=${gid}`;
     }
-    return `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+    return `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=${gid}`;
   }
 
   return trimmed;
@@ -33,11 +28,23 @@ export function normalizeGoogleSheetUrl(rawUrl, useExport = true) {
  */
 export async function fetchCloudParkingData(url) {
   if (!url) throw new Error('請提供有效的雲端試算表網址！');
-  const targetUrl = normalizeGoogleSheetUrl(url);
+  const targetUrl = normalizeGoogleSheetUrl(url, true);
 
-  const response = await fetch(targetUrl);
-  if (!response.ok) {
-    throw new Error(`無法連接雲端試算表 (HTTP ${response.status})，請確認試算表分享權限為「知道連結的任何人均可檢視」。`);
+  let response;
+  try {
+    response = await fetch(targetUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  } catch (err) {
+    try {
+      const altUrl = normalizeGoogleSheetUrl(url, false);
+      response = await fetch(altUrl);
+    } catch (e) {
+      throw new Error(`無法連接雲端試算表 (${err.message || 'Load failed'})，請確認網路環境或試算表共用權限。`);
+    }
+  }
+
+  if (!response || !response.ok) {
+    throw new Error(`無法連接雲端試算表 (HTTP ${response?.status || 'Error'})，請確認試算表分享權限為「知道連結的任何人均可檢視」。`);
   }
 
   const csvText = await response.text();
@@ -113,19 +120,20 @@ export async function fetchCloudParkingData(url) {
  * 遠端抓取並解析雲端 Google 試算表之執勤排班表
  */
 export async function fetchCloudScheduleData(url, currentSchedule = null) {
-  if (!url) throw new Error('請提供有效的雲端執勤班表網址！');
-  const targetUrl = normalizeGoogleSheetUrl(url);
+  // 執勤班表因包含複雜合併儲存格，export 格式能精準保留原格式且支援 CORS
+  let targetUrl = normalizeGoogleSheetUrl(url, false);
 
   let response;
   try {
     response = await fetch(targetUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
   } catch (err) {
-    const altUrl = normalizeGoogleSheetUrl(url, false);
+    const altUrl = normalizeGoogleSheetUrl(url, true);
     response = await fetch(altUrl);
   }
 
-  if (!response.ok) {
-    throw new Error(`無法連接雲端試算表 (HTTP ${response.status})，請確認試算表分享權限為「知道連結的任何人均可檢視」。`);
+  if (!response || !response.ok) {
+    throw new Error(`無法連接雲端試算表 (HTTP ${response?.status || 'Error'})，請確認試算表分享權限為「知道連結的任何人均可檢視」。`);
   }
 
   const csvText = await response.text();
@@ -233,6 +241,18 @@ export async function fetchCloudScheduleData(url, currentSchedule = null) {
   }
 
   return {
+    dayNames: ["日", "一", "二", "三", "四", "五", "六"],
+    phone: "02-2259-2999",
+    fax: "02-2256-2609",
+    headquarters: "220新北市板橋區文化路二段498號3樓",
+    shiftTypes: {
+      A: {
+        name: "日班",
+        timeRange: "07:00~19:00",
+        hours: 12,
+        color: "#4f46e5"
+      }
+    },
     ...(currentSchedule || {}),
     projectTitle: "天泰三總 現場執勤表",
     companyName: "飛龍保全",

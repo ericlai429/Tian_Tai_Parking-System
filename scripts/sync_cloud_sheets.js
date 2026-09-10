@@ -91,15 +91,87 @@ async function fetchSheetWithSig(csvUrl, sigUrl, label) {
   return { csv, sig, hash, size };
 }
 
+// 同步更新前端程式原始碼 defaultParking.js
+function updateDefaultParkingSource(csvText) {
+  try {
+    const wb = XLSX.read(csvText, { type: 'string' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (!aoa || aoa.length === 0) return;
+
+    let headerIdx = -1;
+    const colMap = {};
+    for (let r = 0; r < Math.min(10, aoa.length); r++) {
+      const row = aoa[r] || [];
+      row.forEach((cell, c) => {
+        const text = String(cell || '').trim();
+        if (text.includes('姓名') || text.includes('車主')) colMap.name = c;
+        if (text.includes('公司') || text.includes('單位')) colMap.unit = c;
+        if (text.includes('職稱') || text.includes('分項')) colMap.title = c;
+        if (text.includes('車號') || text.includes('車牌') || text.includes('Plate')) colMap.plate = c;
+        if (text.includes('電話') || text.includes('手機')) colMap.phone = c;
+        if (text.includes('備註') || text.includes('說明')) colMap.notes = c;
+      });
+      if (colMap.plate !== undefined) {
+        headerIdx = r;
+        break;
+      }
+    }
+
+    if (headerIdx === -1 || colMap.plate === undefined) return;
+
+    const vehicles = [];
+    for (let r = headerIdx + 1; r < aoa.length; r++) {
+      const row = aoa[r] || [];
+      const rawPlate = String(row[colMap.plate] || '').trim().toUpperCase();
+      if (!rawPlate) continue;
+
+      const name = String(row[colMap.name] || '').trim();
+      const unit = String(row[colMap.unit] || '').trim() || '天泰營造';
+      const title = String(row[colMap.title] || '').trim();
+      const phone = colMap.phone !== undefined ? String(row[colMap.phone] || '').trim() : '';
+      const notes = colMap.notes !== undefined ? String(row[colMap.notes] || '').trim() : '';
+
+      const isVip = title.includes('長') || title.includes('主任') || title.includes('經理') || title.includes('協理') || title.includes('建築師') || title.includes('執行長') || title.includes('總經理') || title.includes('負責人') || notes.includes('VIP');
+      const isTruck = name.includes('貨車') || title.includes('貨車') || rawPlate.includes('CCF') || rawPlate.includes('0159');
+
+      vehicles.push({
+        id: `p_${vehicles.length + 1}`,
+        passNo: String(vehicles.length + 1).padStart(3, '0'),
+        plate: rawPlate,
+        name: name || (isTruck ? '工程貨車' : '公務車輛'),
+        unit,
+        subItem: title || (isTruck ? '貨車&重機械' : '公務'),
+        phone,
+        notes: notes || `${unit} ${title}`,
+        type: isVip ? 'vip' : (isTruck ? 'temp' : 'regular'),
+        status: 'pass',
+        admin1: 'OK',
+        admin2: 'OK',
+        admin3: isVip ? 'OK' : ''
+      });
+    }
+
+    if (vehicles.length > 0) {
+      const targetFile = path.join(projectRoot, 'src', 'data', 'defaultParking.js');
+      const codeContent = `// 預設 Google 雲端試算表網址 (由 Admin 編輯)\nexport const DEFAULT_PARKING_SHEET_URL = "https://docs.google.com/spreadsheets/d/1QJkm5rNHtyQN84awlHWoz4n9jE8NFogk4I4k4x3FPok/edit?gid=239543721#gid=239543721";\n\n// 初始車輛名冊 (自動自雲端試算表同步，共 ${vehicles.length} 輛)\nexport const INITIAL_PARKING_DATA = ${JSON.stringify(vehicles, null, 2)};\n`;
+      fs.writeFileSync(targetFile, codeContent, 'utf8');
+      console.log(`   ✔ 已同步更新前端程式原始碼：src/data/defaultParking.js (共 ${vehicles.length} 筆)`);
+    }
+  } catch (err) {
+    console.error('更新 defaultParking.js 發生警告：', err.message);
+  }
+}
+
 // 3. GitHub 雲端專案庫自動同步
 function syncWithGitHub(currentFormattedTime) {
   process.stdout.write('☁️  [4/4] 正在檢查與同步 GitHub 雲端專案庫... ');
   try {
-    // 確保只針對「雲端試算表副本」進行 stage
-    execFileSync('git', ['add', '雲端試算表副本'], { cwd: projectRoot, stdio: ['ignore', 'ignore', 'pipe'] });
+    // 針對「雲端試算表副本」與「src/data/defaultParking.js」進行 stage
+    execFileSync('git', ['add', '雲端試算表副本', 'src/data/defaultParking.js'], { cwd: projectRoot, stdio: ['ignore', 'ignore', 'pipe'] });
 
-    // 檢查「雲端試算表副本」是否有變更
-    const statusOutput = execFileSync('git', ['status', '--porcelain', '雲端試算表副本'], { cwd: projectRoot, encoding: 'utf8' }).trim();
+    // 檢查是否有變更
+    const statusOutput = execFileSync('git', ['status', '--porcelain', '雲端試算表副本', 'src/data/defaultParking.js'], { cwd: projectRoot, encoding: 'utf8' }).trim();
 
     if (statusOutput) {
       console.log('✔ 偵測到本地副本異動！');
@@ -237,6 +309,9 @@ async function runSync() {
     if (isAllUpToDate) {
       console.log('✔ 經嚴格比對：Google 雲端檔案大小與版本內容均無新版。');
       console.log('🛡️  安全保護：【不覆蓋本地副本資料】（維持本機原始檔案與修改時間）\n');
+
+      // 確保前端原始碼 defaultParking.js 與雲端名冊同步
+      updateDefaultParkingSource(parkingData.csv);
 
       // 步驟 4：檢查 GitHub 狀態
       gitResult = syncWithGitHub(currentFormattedTime);
