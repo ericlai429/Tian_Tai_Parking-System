@@ -1,17 +1,19 @@
 {
-  "lastSyncSuccessTime": "2026年09月10日 (週四) 14:13:55",
-  "lastCheckTime": "2026年09月10日 (週四) 14:13:55",
+  "lastSyncSuccessTime": "2026年09月10日 (週四) 15:12:25",
+  "lastCheckTime": "2026年09月10日 (週四) 15:12:25",
   "parking": {
-    "hash": "74a4c6e7b6130f2efb73dd95bb950921f757b46774950658c3eb07a4d589deff",
-    "sig": "9591173",
-    "count": 16,
-    "lastCloudUpdated": "2026年09月10日 (週四) 14:13:55"
+    "hash": "29288ed20a46643a80e30b0bb54c330cdf09299fa9ea6a8ee1cba89320f9856c",
+    "sig": "908371508",
+    "size": 3333,
+    "count": 19,
+    "lastCloudUpdated": "2026年09月10日 (週四) 15:12:25"
   },
   "schedule": {
     "hash": "968fbd4a4de6b4a085399374a6bce7d8a20ba47aea1aceaaa48d7a0c75ba61a6",
     "sig": "1539808346",
+    "size": 2306,
     "officialDate": "115年9月7日",
     "totalHours": 276,
-    "lastCloudUpdated": "2026年09月10日 (週四) 14:13:55"
+    "lastCloudUpdated": "2026年09月10日 (週四) 15:12:25"
   }
 }
