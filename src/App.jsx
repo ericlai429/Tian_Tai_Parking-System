@@ -8,6 +8,7 @@ import PassCardModal from './components/PassCardModal';
 
 import { INITIAL_SCHEDULE_DATA, DEFAULT_SCHEDULE_SHEET_URL } from './data/initialSchedule';
 import { INITIAL_PARKING_DATA, DEFAULT_PARKING_SHEET_URL } from './data/defaultParking';
+import { fetchCloudParkingData } from './utils/cloudSheetHelper';
 import { Lock, Unlock, KeyRound, CreditCard } from 'lucide-react';
 
 export default function App() {
@@ -121,6 +122,48 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('tian_tai_schedule_data', JSON.stringify(scheduleData));
   }, [scheduleData]);
+
+  // 背景自動偵測雲端試算表最新車輛名冊 (動態自動對齊雲端最新增加之車輛)
+  useEffect(() => {
+    let isMounted = true;
+    async function autoAlignCloudParking() {
+      try {
+        const url = cloudConfig?.parkingUrl || DEFAULT_PARKING_SHEET_URL;
+        const cloudVehicles = await fetchCloudParkingData(url);
+        if (!isMounted || !Array.isArray(cloudVehicles) || cloudVehicles.length === 0) return;
+
+        setParkingList((prev) => {
+          // 若雲端車輛數量增加或車牌清單有更新，自動動態對齊
+          const isDifferentLength = cloudVehicles.length !== prev.length;
+          const isDifferentPlates = cloudVehicles.some((cv, idx) => cv.plate !== prev[idx]?.plate);
+          if (isDifferentLength || isDifferentPlates) {
+            console.log(`[自動動態對齊] 雲端車冊已有更新 (最新共 ${cloudVehicles.length} 輛)，已自動即時同步！`);
+            try {
+              localStorage.setItem('tian_tai_parking_data', JSON.stringify(cloudVehicles));
+            } catch (e) { /* ignore */ }
+            return cloudVehicles;
+          }
+          return prev;
+        });
+
+        setCloudStatus((prev) => ({
+          ...prev,
+          connected: true,
+          lastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
+      } catch (err) {
+        // 離線或網絡暫時中斷時靜默處理，絕不干擾本地快取正常使用
+        console.log('[自動動態對齊] 目前處於離線或靜默連線狀態');
+      }
+    }
+
+    // 啟動 1 秒後靜默執行，確保介面 0 秒秒開
+    const timer = setTimeout(autoAlignCloudParking, 1000);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [cloudConfig?.parkingUrl]);
 
   // 驗證管理員密碼
   const handleAdminLogin = (e) => {
