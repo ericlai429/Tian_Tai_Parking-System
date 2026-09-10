@@ -74,6 +74,7 @@ async function fetchSheetWithSig(csvUrl, sigUrl, label) {
   }
 
   const csv = await csvRes.text();
+  const size = Buffer.byteLength(csv, 'utf8');
   let sig = '';
   if (sigRes && sigRes.ok) {
     try {
@@ -86,8 +87,8 @@ async function fetchSheetWithSig(csvUrl, sigUrl, label) {
   }
 
   const hash = crypto.createHash('sha256').update(csv).digest('hex');
-  console.log(`✔ 讀取完成 (版本簽章: ${sig || hash.slice(0, 8)})`);
-  return { csv, sig, hash };
+  console.log(`✔ 讀取完成 (大小: ${size} bytes | 版本簽章: ${sig || hash.slice(0, 8)})`);
+  return { csv, sig, hash, size };
 }
 
 // 3. GitHub 雲端專案庫自動同步
@@ -191,10 +192,41 @@ async function runSync() {
     }
 
     const parkingFile = path.join(outputDir, '天泰工區車輛名冊_最新副本.xlsx');
+    const parkingCsvFile = path.join(outputDir, '天泰工區車輛名冊_最新副本.csv');
     const scheduleFile = path.join(outputDir, '天泰現場執勤班表_最新副本.xlsx');
+    const scheduleCsvFile = path.join(outputDir, '天泰現場執勤班表_最新副本.csv');
 
-    const isParkingSame = prevStatus?.parking?.hash === parkingData.hash && fs.existsSync(parkingFile);
-    const isScheduleSame = prevStatus?.schedule?.hash === scheduleData.hash && fs.existsSync(scheduleFile);
+    // 檢查本地副本是否存在
+    const hasLocalParking = fs.existsSync(parkingFile) && fs.existsSync(parkingCsvFile);
+    const hasLocalSchedule = fs.existsSync(scheduleFile) && fs.existsSync(scheduleCsvFile);
+
+    // 讀取本地現有 CSV 內容與檔案大小，精確比對
+    let localParkingCsv = null;
+    let localParkingSize = 0;
+    if (hasLocalParking) {
+      localParkingCsv = fs.readFileSync(parkingCsvFile, 'utf8').replace(/^\uFEFF/, '');
+      localParkingSize = Buffer.byteLength(localParkingCsv, 'utf8');
+    }
+
+    let localScheduleCsv = null;
+    let localScheduleSize = 0;
+    if (hasLocalSchedule) {
+      localScheduleCsv = fs.readFileSync(scheduleCsvFile, 'utf8').replace(/^\uFEFF/, '');
+      localScheduleSize = Buffer.byteLength(localScheduleCsv, 'utf8');
+    }
+
+    // 雲端與本地檔案大小與特徵多重比對：
+    // 若大小與內容無異動（或 hash 與 sig 一致），判定為無新版本
+    const isParkingSame = hasLocalParking && (
+      (localParkingCsv !== null && localParkingCsv === parkingData.csv) ||
+      (prevStatus?.parking?.hash === parkingData.hash && prevStatus?.parking?.size === parkingData.size)
+    );
+
+    const isScheduleSame = hasLocalSchedule && (
+      (localScheduleCsv !== null && localScheduleCsv === scheduleData.csv) ||
+      (prevStatus?.schedule?.hash === scheduleData.hash && prevStatus?.schedule?.size === scheduleData.size)
+    );
+
     const isAllUpToDate = isParkingSame && isScheduleSame;
 
     const parkingCount = analyzeParkingCount(parkingData.csv);
@@ -203,25 +235,29 @@ async function runSync() {
     let gitResult = null;
 
     if (isAllUpToDate) {
-      console.log('✔ 本地所有試算表與雲端一致，檔案無需重複下載。\n');
+      console.log('✔ 經嚴格比對：Google 雲端檔案大小與版本內容均無新版。');
+      console.log('🛡️  安全保護：【不覆蓋本地副本資料】（維持本機原始檔案與修改時間）\n');
+
       // 步驟 4：檢查 GitHub 狀態
       gitResult = syncWithGitHub(currentFormattedTime);
 
       // 情況 A：已經是最新版
       console.log('----------------------------------------------------------------------');
-      console.log('✨ 【報告：當前本地副本與 GitHub 專案庫皆為最新版】');
+      console.log('✨ 【報告：雲端無新版，本地副本檔案完整保留（未予覆蓋）】');
       console.log('----------------------------------------------------------------------');
       console.log(`📅 今日檢測時間 ：${currentFormattedTime}`);
       console.log(`📁 本地副本目錄 ：${outputDir}\n`);
 
       console.log('【1. 車輛管制名冊】');
-      console.log(`  • 當前狀態    ：已是最新版本（與 Google 雲端一致）`);
+      console.log(`  • 檔案比對結果：雲端大小 (${parkingData.size} bytes) 與本地現有檔案一致`);
+      console.log(`  • 覆蓋處理狀態：【不覆蓋】保持本地現有副本檔案原樣`);
       console.log(`  • 雲端最後更新：${prevStatus?.parking?.lastCloudUpdated || currentFormattedTime}`);
       console.log(`  • 名冊車輛筆數：共 ${parkingCount} 輛核可車輛`);
       console.log(`  • 檔案位置    ：${path.basename(parkingFile)}\n`);
 
       console.log('【2. 現場執勤排班表】');
-      console.log(`  • 當前狀態    ：已是最新版本（與 Google 雲端一致）`);
+      console.log(`  • 檔案比對結果：雲端大小 (${scheduleData.size} bytes) 與本地現有檔案一致`);
+      console.log(`  • 覆蓋處理狀態：【不覆蓋】保持本地現有副本檔案原樣`);
       console.log(`  • 官方核定日期：${scheduleDate}（全月總工時 276 小時）`);
       console.log(`  • 雲端最後更新：${prevStatus?.schedule?.lastCloudUpdated || currentFormattedTime}`);
       console.log(`  • 檔案位置    ：${path.basename(scheduleFile)}\n`);
@@ -232,7 +268,7 @@ async function runSync() {
       console.log('----------------------------------------------------------------------');
 
     } else {
-      console.log('⚡ 偵測到雲端試算表有新內容，正在更新本地副本...\n');
+      console.log('⚡ 偵測到雲端試算表有新內容（大小或內容已更新），正在更新本地副本...\n');
       // 情況 B：檢測到新版本或首次執行，寫入檔案並備份
       const parkingWb = XLSX.read(parkingData.csv, { type: 'string' });
       const scheduleWb = XLSX.read(scheduleData.csv, { type: 'string' });
@@ -266,12 +302,14 @@ async function runSync() {
         parking: {
           hash: parkingData.hash,
           sig: parkingData.sig,
+          size: parkingData.size,
           count: parkingCount,
           lastCloudUpdated: currentFormattedTime
         },
         schedule: {
           hash: scheduleData.hash,
           sig: scheduleData.sig,
+          size: scheduleData.size,
           officialDate: scheduleDate,
           totalHours: 276,
           lastCloudUpdated: currentFormattedTime

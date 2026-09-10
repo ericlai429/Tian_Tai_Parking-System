@@ -58,6 +58,42 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
     tableContainerRef.current.scrollBy({ left: delta, behavior: 'smooth' });
   };
 
+  // 計算當前執勤日 (以 9 月為準，若為 9 月則以今日日期為主；若非 9 月則限制在全月天數範圍內)
+  const todayDate = new Date();
+  const todayDay = (todayDate.getMonth() + 1 === 9)
+    ? todayDate.getDate()
+    : Math.min(Math.max(todayDate.getDate(), 1), scheduleData?.daysInMonth || 30);
+
+  // 畫面自動平移居中定位至當日
+  const centerToday = (smooth = true) => {
+    if (!tableContainerRef.current) return;
+    const container = tableContainerRef.current;
+    const todayCol = container.querySelector(`[data-day="${todayDay}"]`);
+    if (!todayCol) return;
+
+    // 前兩欄為固定凍結欄位 (班別 66px + 人員 74px = 140px)
+    const stickyWidth = 140;
+    const visibleWidth = container.clientWidth - stickyWidth;
+    const colLeft = todayCol.offsetLeft;
+    const colWidth = todayCol.offsetWidth;
+
+    // 計算滾動位置，讓當日欄位正處於「可見區域」正中央
+    const targetScrollLeft = colLeft + (colWidth / 2) - stickyWidth - (visibleWidth / 2);
+
+    container.scrollTo({
+      left: Math.max(0, targetScrollLeft),
+      behavior: smooth ? 'smooth' : 'auto'
+    });
+  };
+
+  // 組件載入或班表切換時，自動平滑居中顯示當日
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      centerToday(true);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [scheduleData]);
+
   // 快速跳轉至上旬、中旬、下旬
   const scrollToDay = (day) => {
     if (!tableContainerRef.current) return;
@@ -159,6 +195,9 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
           <div className="flex items-center justify-between gap-1 text-[11px] flex-wrap">
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 whitespace-nowrap">
+                <span className="w-2.5 h-2.5 rounded bg-emerald-400 border border-emerald-300 shadow-sm shadow-emerald-400/50 animate-pulse"></span> 當日
+              </span>
+              <span className="flex items-center gap-1 whitespace-nowrap">
                 <span className="w-2.5 h-2.5 rounded bg-amber-400/30 border border-amber-400"></span> 週末
               </span>
               <span className="flex items-center gap-1 whitespace-nowrap">
@@ -169,9 +208,19 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
               </span>
             </div>
 
-            {/* 快速定位旬別按鈕 */}
+            {/* 快速定位旬別按鈕 (含當日即時置中按鈕) */}
             <div className="flex items-center gap-1 text-[11px] font-bold">
               <button 
+                type="button"
+                onClick={() => centerToday(true)}
+                className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/35 active:scale-95 text-emerald-300 border border-emerald-400/50 whitespace-nowrap transition-all flex items-center gap-1 shadow-sm font-extrabold"
+                title="畫面立即平移居中對齊當日"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                🎯 當日 ({todayDay}日)
+              </button>
+              <button 
+                type="button"
                 onClick={() => scrollToDay(1)}
                 className="px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 active:scale-95 text-indigo-300 border border-indigo-500/30 whitespace-nowrap transition-all"
                 title="跳轉至 1 ~ 10 日"
@@ -179,6 +228,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                 1~10日
               </button>
               <button 
+                type="button"
                 onClick={() => scrollToDay(11)}
                 className="px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 active:scale-95 text-indigo-300 border border-indigo-500/30 whitespace-nowrap transition-all"
                 title="跳轉至 11 ~ 20 日"
@@ -186,6 +236,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                 11~20日
               </button>
               <button 
+                type="button"
                 onClick={() => scrollToDay(21)}
                 className="px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/30 active:scale-95 text-indigo-300 border border-indigo-500/30 whitespace-nowrap transition-all"
                 title="跳轉至 21 ~ 30 日"
@@ -224,12 +275,23 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                 </th>
                 {Array.from({ length: scheduleData.daysInMonth }, (_, i) => i + 1).map(d => {
                   const weekend = isWeekendDay(d);
+                  const isToday = d === todayDay;
                   return (
                     <th 
                       key={d} 
-                      className={`p-1 font-bold w-8 min-w-[32px] whitespace-nowrap ${weekend ? 'bg-amber-400/20 text-amber-300' : ''}`}
-                      style={{ color: weekend ? '#fbbf24' : 'var(--text)' }}
+                      data-day={d}
+                      className={`p-1 font-bold w-8 min-w-[34px] whitespace-nowrap transition-all ${
+                        isToday 
+                          ? 'today-col-glow border-x border-emerald-400/50 z-10' 
+                          : weekend ? 'bg-amber-400/20 text-amber-300' : ''
+                      }`}
+                      style={{ color: isToday ? '#34d399' : weekend ? '#fbbf24' : 'var(--text)' }}
                     >
+                      {isToday && (
+                        <span className="block text-[8px] font-black px-0.5 py-0 rounded bg-emerald-400 text-slate-950 leading-tight mb-0.5 shadow-sm shadow-emerald-400/50">
+                          今日
+                        </span>
+                      )}
                       {d}
                     </th>
                   );
@@ -242,11 +304,16 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                 <th className="p-1 sticky left-[66px] z-20 whitespace-nowrap" style={{ backgroundColor: 'var(--card-bg)' }}>-</th>
                 {Array.from({ length: scheduleData.daysInMonth }, (_, i) => i + 1).map(d => {
                   const weekend = isWeekendDay(d);
+                  const isToday = d === todayDay;
                   return (
                     <th 
                       key={d} 
-                      className={`p-1 font-sans font-bold w-8 min-w-[32px] whitespace-nowrap ${weekend ? 'bg-amber-400/25 text-amber-400' : ''}`}
-                      style={{ color: weekend ? '#f59e0b' : 'var(--text-muted)' }}
+                      className={`p-1 font-sans font-bold w-8 min-w-[34px] whitespace-nowrap transition-all ${
+                        isToday 
+                          ? 'today-col-glow border-x border-emerald-400/50 z-10 font-black' 
+                          : weekend ? 'bg-amber-400/25 text-amber-400' : ''
+                      }`}
+                      style={{ color: isToday ? '#10b981' : weekend ? '#f59e0b' : 'var(--text-muted)' }}
                     >
                       {getWeekdayName(d)}
                     </th>
@@ -277,28 +344,41 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                     const shift = guard.shifts[d] || '';
                     const isSpecialPink = (guard.id === 'g3' && d === 11) || (guard.specialNotes && guard.specialNotes[d]?.type === 'substitute');
                     const weekend = isWeekendDay(d);
+                    const isToday = d === todayDay;
 
                     return (
                       <td 
                         key={d} 
-                        className={`p-1 w-8 min-w-[32px] whitespace-nowrap transition-all ${weekend ? 'bg-amber-400/5' : ''}`}
+                        className={`p-1 w-8 min-w-[34px] whitespace-nowrap transition-all ${
+                          isToday 
+                            ? 'today-col-glow border-x border-emerald-400/40 z-10' 
+                            : weekend ? 'bg-amber-400/5' : ''
+                        }`}
                       >
                         {shift === 'A' ? (
                           <span className={`inline-flex items-center justify-center w-6 h-6 rounded font-black text-xs ${
                             isSpecialPink 
                               ? 'bg-fuchsia-600 text-white shadow-md shadow-fuchsia-500/40 animate-pulse'
-                              : 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40'
+                              : isToday
+                                ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/50 ring-2 ring-emerald-300 scale-105'
+                                : 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40'
                           }`}
-                          title={isSpecialPink ? `${d}日 ${guard.name} 機動代班` : `${guard.name} 日班 A`}
+                          title={isToday ? `今日執勤：${guard.name} (日班 A)` : isSpecialPink ? `${d}日 ${guard.name} 機動代班` : `${guard.name} 日班 A`}
                           >
                             A
                           </span>
                         ) : shift === '休' ? (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded font-bold text-xs bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded font-bold text-xs ${
+                            isToday
+                              ? 'bg-rose-500/25 text-rose-300 border border-rose-400/60 ring-2 ring-rose-400/30 font-black'
+                              : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                          }`}
+                          title={isToday ? `今日排休：${guard.name}` : `${guard.name} 排休`}
+                          >
                             休
                           </span>
                         ) : (
-                          <span className="text-slate-600">-</span>
+                          <span className={isToday ? 'text-emerald-500/60 font-bold' : 'text-slate-600'}>-</span>
                         )}
                       </td>
                     );
