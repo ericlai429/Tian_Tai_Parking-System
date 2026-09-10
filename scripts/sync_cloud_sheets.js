@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-import { exec } from 'child_process';
+import { exec, execFileSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,7 +38,7 @@ function formatFullDateTime(d = new Date()) {
 
 // 1. 網路連線環境檢測
 async function checkNetwork() {
-  process.stdout.write('🔍 [1/3] 正在檢測網路環境與 Google 雲端連線... ');
+  process.stdout.write('🔍 [1/4] 正在檢測網路環境與 Google 雲端連線... ');
   const t0 = Date.now();
   try {
     const controller = new AbortController();
@@ -90,6 +90,47 @@ async function fetchSheetWithSig(csvUrl, sigUrl, label) {
   return { csv, sig, hash };
 }
 
+// 3. GitHub 雲端專案庫自動同步
+function syncWithGitHub(currentFormattedTime) {
+  process.stdout.write('☁️  [4/4] 正在檢查與同步 GitHub 雲端專案庫... ');
+  try {
+    // 確保只針對「雲端試算表副本」進行 stage
+    execFileSync('git', ['add', '雲端試算表副本'], { cwd: projectRoot, stdio: ['ignore', 'ignore', 'pipe'] });
+
+    // 檢查「雲端試算表副本」是否有變更
+    const statusOutput = execFileSync('git', ['status', '--porcelain', '雲端試算表副本'], { cwd: projectRoot, encoding: 'utf8' }).trim();
+
+    if (statusOutput) {
+      console.log('✔ 偵測到本地副本異動！');
+      console.log('   🚀 正在自動提交 (commit) 並推送 (push) 至 GitHub (origin/main)...');
+      const commitMsg = `Auto-sync: 更新雲端試算表副本 (${currentFormattedTime})`;
+      execFileSync('git', ['commit', '-m', commitMsg], { cwd: projectRoot, stdio: ['ignore', 'pipe', 'pipe'] });
+      execFileSync('git', ['push', 'origin', 'main'], { cwd: projectRoot, stdio: ['ignore', 'pipe', 'pipe'] });
+      console.log('   ✔ 已成功推送到 GitHub 雲端專案庫 (main 分支)！');
+      return { status: 'pushed', msg: '已成功提交並推送到 GitHub (origin/main)' };
+    } else {
+      // 檢查本地 main 是否有先前尚未推送的 commits
+      try {
+        const unpushed = execFileSync('git', ['cherry', '-v', 'origin/main'], { cwd: projectRoot, encoding: 'utf8' }).trim();
+        if (unpushed) {
+          console.log('發現未推送的提交，正在推送到 GitHub...');
+          execFileSync('git', ['push', 'origin', 'main'], { cwd: projectRoot, stdio: ['ignore', 'pipe', 'pipe'] });
+          console.log('   ✔ 成功推送到 GitHub 雲端專案庫！');
+          return { status: 'pushed', msg: '已推送累積之本地更新至 GitHub' };
+        }
+      } catch {
+        // 忽略
+      }
+      console.log('✔ 本地與 GitHub 均為最新狀態（無須重複推送）');
+      return { status: 'uptodate', msg: '本地與雲端專案庫均為最新版' };
+    }
+  } catch (err) {
+    console.log('⚠️  GitHub 同步暫時略過');
+    const errMsg = (err.message || '').split('\n')[0];
+    return { status: 'error', msg: `推送略過 (${errMsg})` };
+  }
+}
+
 // 分析車輛名冊筆數
 function analyzeParkingCount(csvText) {
   try {
@@ -131,13 +172,13 @@ async function runSync() {
     console.log();
 
     // 步驟 2：讀取兩份雲端試算表
-    console.log('📥 [2/3] 同步抓取公司官版雲端試算表內容...');
+    console.log('📥 [2/4] 同步抓取公司官版雲端試算表內容...');
     const parkingData = await fetchSheetWithSig(PARKING_CSV_URL, PARKING_SIG_URL, '車輛管制名冊');
     const scheduleData = await fetchSheetWithSig(SCHEDULE_CSV_URL, SCHEDULE_SIG_URL, '現場執勤班表');
     console.log();
 
     // 步驟 3：版本比對
-    console.log('🔄 [3/3] 智慧版本校驗中...');
+    console.log('🔄 [3/4] 智慧版本校驗中...');
 
     // 讀取上次同步狀態
     let prevStatus = null;
@@ -159,32 +200,39 @@ async function runSync() {
     const parkingCount = analyzeParkingCount(parkingData.csv);
     const scheduleDate = analyzeScheduleDate(scheduleData.csv);
 
+    let gitResult = null;
+
     if (isAllUpToDate) {
+      console.log('✔ 本地所有試算表與雲端一致，檔案無需重複下載。\n');
+      // 步驟 4：檢查 GitHub 狀態
+      gitResult = syncWithGitHub(currentFormattedTime);
+
       // 情況 A：已經是最新版
       console.log('----------------------------------------------------------------------');
-      console.log('✨ 【報告：當前本地副本已是最新版】');
+      console.log('✨ 【報告：當前本地副本與 GitHub 專案庫皆為最新版】');
       console.log('----------------------------------------------------------------------');
       console.log(`📅 今日檢測時間 ：${currentFormattedTime}`);
       console.log(`📁 本地副本目錄 ：${outputDir}\n`);
 
       console.log('【1. 車輛管制名冊】');
-      console.log(`  • 當前狀態    ：已是最新版本（與雲端一致，無需重複下載）`);
+      console.log(`  • 當前狀態    ：已是最新版本（與 Google 雲端一致）`);
       console.log(`  • 雲端最後更新：${prevStatus?.parking?.lastCloudUpdated || currentFormattedTime}`);
       console.log(`  • 名冊車輛筆數：共 ${parkingCount} 輛核可車輛`);
       console.log(`  • 檔案位置    ：${path.basename(parkingFile)}\n`);
 
       console.log('【2. 現場執勤排班表】');
-      console.log(`  • 當前狀態    ：已是最新版本（與雲端一致，無需重複下載）`);
+      console.log(`  • 當前狀態    ：已是最新版本（與 Google 雲端一致）`);
       console.log(`  • 官方核定日期：${scheduleDate}（全月總工時 276 小時）`);
       console.log(`  • 雲端最後更新：${prevStatus?.schedule?.lastCloudUpdated || currentFormattedTime}`);
-      console.log(`  • 檔案位置    ：${path.basename(scheduleFile)}`);
+      console.log(`  • 檔案位置    ：${path.basename(scheduleFile)}\n`);
+
+      console.log('【3. GitHub 雲端專案庫】');
+      console.log(`  • 同步狀態    ：${gitResult.msg}`);
+      console.log(`  • 專案庫網址  ：https://github.com/ericlai429/Tian_Tai_Parking-System`);
       console.log('----------------------------------------------------------------------');
 
-      // 更新最後檢查時間
-      prevStatus.lastCheckTime = currentFormattedTime;
-      fs.writeFileSync(statusFile, JSON.stringify(prevStatus, null, 2), 'utf8');
-
     } else {
+      console.log('⚡ 偵測到雲端試算表有新內容，正在更新本地副本...\n');
       // 情況 B：檢測到新版本或首次執行，寫入檔案並備份
       const parkingWb = XLSX.read(parkingData.csv, { type: 'string' });
       const scheduleWb = XLSX.read(scheduleData.csv, { type: 'string' });
@@ -231,8 +279,11 @@ async function runSync() {
       };
       fs.writeFileSync(statusFile, JSON.stringify(newStatus, null, 2), 'utf8');
 
+      // 步驟 4：推送更新到 GitHub
+      gitResult = syncWithGitHub(currentFormattedTime);
+
       console.log('----------------------------------------------------------------------');
-      console.log('🎉 【報告：已成功同步並更新本地副本！】');
+      console.log('🎉 【報告：已成功同步更新本地副本與 GitHub 雲端專案庫！】');
       console.log('----------------------------------------------------------------------');
       console.log(`📅 同步完成時間 ：${currentFormattedTime}`);
       console.log(`📁 本地儲存目錄 ：${outputDir}\n`);
@@ -246,6 +297,10 @@ async function runSync() {
       console.log(`  • 官方核定日期：${scheduleDate}（全月總工時 276 小時）`);
       console.log(`  • 雲端最後更新：${currentFormattedTime}`);
       console.log(`  • 檔案產出    ：${path.basename(scheduleFile)} (含 .csv)\n`);
+
+      console.log('【3. GitHub 雲端專案庫】');
+      console.log(`  • 雲端同步    ：${gitResult.msg}`);
+      console.log(`  • 專案庫網址  ：https://github.com/ericlai429/Tian_Tai_Parking-System\n`);
 
       console.log(`📦 歷史版本已安全歸檔於：${backupDir}`);
       console.log('----------------------------------------------------------------------');
