@@ -1,4 +1,7 @@
-﻿export const INITIAL_SCHEDULE_DATA = {
+// 預設 Google 雲端執勤班表網址 (由 Admin 編輯)
+export const DEFAULT_SCHEDULE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1oL4MWWiqKycGVKcvuZQCFBnGpK7QZn65NHm3BY_Ospw/edit?gid=1944564462#gid=1944564462";
+
+export const INITIAL_SCHEDULE_DATA = {
   projectTitle: "天泰三總 現場執勤表",
   companyName: "飛龍保全",
   corpName: "中華飛龍物業",
@@ -35,30 +38,20 @@
       role: "日班",
       type: "regular",
       phone: "0911-222-333",
-      targetHours: 192,
-      actualHours: 192,
+      targetHours: 144,
+      actualHours: 144,
       shifts: {
         8: "A",
-        10: "A",
-        11: "休",
         12: "A",
         13: "A",
-        14: "A",
-        15: "休",
-        16: "休",
-        17: "A",
         18: "A",
         19: "A",
         20: "A",
-        21: "休",
-        22: "休",
-        23: "A",
         24: "A",
         25: "A",
         26: "A",
         27: "A",
         28: "A",
-        29: "休",
         30: "A"
       },
       specialNotes: {}
@@ -69,21 +62,27 @@
       role: "日機",
       type: "backup",
       phone: "0922-333-444",
-      targetHours: 60,
-      actualHours: 60,
+      targetHours: 96,
+      actualHours: 96,
       shifts: {
+        14: "A",
         15: "A",
         16: "A",
+        17: "A",
         21: "A",
         22: "A",
+        23: "A",
         29: "A"
       },
       specialNotes: {
-        15: "代班 賴鯤仲 排休",
-        16: "代班 賴鯤仲 排休",
-        21: "代班 賴鯤仲 排休",
-        22: "代班 賴鯤仲 排休",
-        29: "代班 賴鯤仲 排休"
+        14: "日機代班",
+        15: "日機代班",
+        16: "日機代班",
+        17: "日機代班",
+        21: "日機代班",
+        22: "日機代班",
+        23: "日機代班",
+        29: "日機代班"
       }
     },
     {
@@ -92,17 +91,20 @@
       role: "日機",
       type: "backup",
       phone: "0933-444-555",
-      targetHours: 12,
-      actualHours: 12,
+      targetHours: 36,
+      actualHours: 36,
       shifts: {
         9: "A",
+        10: "A",
         11: "A"
       },
       specialNotes: {
+        9: "日機代班",
+        10: "日機代班",
         11: {
           type: "substitute",
-          label: "臨時代班 (賴鯤仲)",
-          color: "#d946ef", // 桃紅色 / Magenta
+          label: "機動代班 (賴鯤仲)",
+          color: "#d946ef",
           bgColor: "#fae8ff",
           borderColor: "#e879f9"
         }

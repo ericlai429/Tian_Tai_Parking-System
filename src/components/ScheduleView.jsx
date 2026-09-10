@@ -165,7 +165,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                 <span className="w-2.5 h-2.5 rounded bg-rose-500/20 text-rose-400 text-center font-bold leading-3">休</span> 排休
               </span>
               <span className="flex items-center gap-1 whitespace-nowrap">
-                <span className="w-2.5 h-2.5 rounded bg-fuchsia-500/40 border border-fuchsia-400"></span> 9/11代班
+                <span className="w-2.5 h-2.5 rounded bg-fuchsia-500/40 border border-fuchsia-400"></span> 機動代班
               </span>
             </div>
 
@@ -275,7 +275,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                   {/* 每日班別格子 */}
                   {Array.from({ length: scheduleData.daysInMonth }, (_, i) => i + 1).map(d => {
                     const shift = guard.shifts[d] || '';
-                    const isSpecialPink = guard.id === 'g3' && d === 11;
+                    const isSpecialPink = (guard.id === 'g3' && d === 11) || (guard.specialNotes && guard.specialNotes[d]?.type === 'substitute');
                     const weekend = isWeekendDay(d);
 
                     return (
@@ -289,7 +289,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                               ? 'bg-fuchsia-600 text-white shadow-md shadow-fuchsia-500/40 animate-pulse'
                               : 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40'
                           }`}
-                          title={isSpecialPink ? '9/11 賴宗興臨時代班賴鯤仲' : `${guard.name} 日班 A`}
+                          title={isSpecialPink ? `${d}日 ${guard.name} 機動代班` : `${guard.name} 日班 A`}
                           >
                             A
                           </span>

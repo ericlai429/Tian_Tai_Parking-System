@@ -6,7 +6,7 @@ import ParkingView from './components/ParkingView';
 import CloudSyncModal from './components/CloudSyncModal';
 import PassCardModal from './components/PassCardModal';
 
-import { INITIAL_SCHEDULE_DATA } from './data/initialSchedule';
+import { INITIAL_SCHEDULE_DATA, DEFAULT_SCHEDULE_SHEET_URL } from './data/initialSchedule';
 import { INITIAL_PARKING_DATA, DEFAULT_PARKING_SHEET_URL } from './data/defaultParking';
 import { Lock, Unlock, KeyRound, CreditCard } from 'lucide-react';
 
@@ -28,12 +28,21 @@ export default function App() {
   const [passCardPasswordInput, setPassCardPasswordInput] = useState('');
   const [passCardError, setPassCardError] = useState('');
 
-  // 勤務班表資料
+  // 勤務班表資料 (對齊 115年9月官方最新排班：賴鯤仲 144H / 葉榮東 96H / 賴宗興 36H)
   const [scheduleData, setScheduleData] = useState(() => {
     const cached = localStorage.getItem('tian_tai_schedule_data');
     if (cached) {
-      try { return JSON.parse(cached); } catch (e) { /* ignore */ }
+      try {
+        const parsed = JSON.parse(cached);
+        // 若快取符合最新官方定案 (賴鯤仲 144 小時)，維持快取；若為舊草案 (192 小時)，自動更新為最新官方班表
+        if (parsed && Array.isArray(parsed.guards) && parsed.guards[0]?.targetHours === 144) {
+          return parsed;
+        }
+      } catch (e) { /* ignore */ }
     }
+    try {
+      localStorage.setItem('tian_tai_schedule_data', JSON.stringify(INITIAL_SCHEDULE_DATA));
+    } catch (e) { /* ignore */ }
     return INITIAL_SCHEDULE_DATA;
   });
 
@@ -64,11 +73,21 @@ export default function App() {
   const [cloudConfig, setCloudConfig] = useState(() => {
     const cached = localStorage.getItem('tian_tai_cloud_config');
     if (cached) {
-      try { return JSON.parse(cached); } catch (e) { /* ignore */ }
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object') {
+          return {
+            parkingUrl: parsed.parkingUrl || DEFAULT_PARKING_SHEET_URL,
+            scheduleUrl: parsed.scheduleUrl || DEFAULT_SCHEDULE_SHEET_URL,
+            scheduleFolderUrl: parsed.scheduleFolderUrl || DEFAULT_SCHEDULE_SHEET_URL
+          };
+        }
+      } catch (e) { /* ignore */ }
     }
     return {
       parkingUrl: DEFAULT_PARKING_SHEET_URL,
-      scheduleFolderUrl: ''
+      scheduleUrl: DEFAULT_SCHEDULE_SHEET_URL,
+      scheduleFolderUrl: DEFAULT_SCHEDULE_SHEET_URL
     };
   });
 
@@ -93,6 +112,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('tian_tai_parking_data', JSON.stringify(parkingList));
   }, [parkingList]);
+
+  useEffect(() => {
+    localStorage.setItem('tian_tai_schedule_data', JSON.stringify(scheduleData));
+  }, [scheduleData]);
 
   // 驗證管理員密碼
   const handleAdminLogin = (e) => {

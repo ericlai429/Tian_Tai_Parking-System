@@ -3,7 +3,7 @@ import {
   Cloud, RefreshCw, CheckCircle2, AlertCircle, 
   ExternalLink, Save, Database, Shield, Lock, FileSpreadsheet, LogOut 
 } from 'lucide-react';
-import { fetchCloudParkingData } from '../utils/cloudSheetHelper';
+import { fetchCloudParkingData, fetchCloudScheduleData } from '../utils/cloudSheetHelper';
 import confetti from 'canvas-confetti';
 
 export default function CloudSyncModal({ 
@@ -18,9 +18,11 @@ export default function CloudSyncModal({
   onLogout
 }) {
   const [parkingUrl, setParkingUrl] = useState(cloudConfig.parkingUrl);
-  const [scheduleFolderUrl, setScheduleFolderUrl] = useState(cloudConfig.scheduleFolderUrl || '');
+  const [scheduleUrl, setScheduleUrl] = useState(cloudConfig.scheduleUrl || cloudConfig.scheduleFolderUrl || '');
   const [isTesting, setIsTesting] = useState(false);
   const [testMessage, setTestMessage] = useState(null);
+  const [isTestingSchedule, setIsTestingSchedule] = useState(false);
+  const [scheduleTestMessage, setScheduleTestMessage] = useState(null);
 
   // 測試並儲存雲端停車試算表連線
   const handleTestAndSave = async (e) => {
@@ -55,6 +57,41 @@ export default function CloudSyncModal({
       setCloudStatus({ connected: false, lastSync: null });
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  // 測試並同步雲端執勤班表
+  const handleSyncSchedule = async (e) => {
+    e.preventDefault();
+    if (!isAdmin) {
+      onRequireAdmin();
+      return;
+    }
+    setIsTestingSchedule(true);
+    setScheduleTestMessage(null);
+
+    try {
+      const newSchedule = await fetchCloudScheduleData(scheduleUrl);
+      setScheduleTestMessage({
+        type: 'success',
+        text: `班表同步成功！已讀取「${newSchedule.projectTitle}」，共 ${newSchedule.guards.length} 位保全人員排班（應勤 ${newSchedule.totalTargetHours} 小時）。`
+      });
+
+      const newCfg = { ...cloudConfig, scheduleUrl, scheduleFolderUrl: scheduleUrl };
+      setCloudConfig(newCfg);
+      localStorage.setItem('tian_tai_cloud_config', JSON.stringify(newCfg));
+
+      if (onSyncSchedule) {
+        onSyncSchedule(newSchedule);
+      }
+      confetti({ particleCount: 80, spread: 80, origin: { y: 0.7 } });
+    } catch (err) {
+      setScheduleTestMessage({
+        type: 'error',
+        text: `班表同步失敗：${err.message}`
+      });
+    } finally {
+      setIsTestingSchedule(false);
     }
   };
 
@@ -182,43 +219,66 @@ export default function CloudSyncModal({
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
               <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
-              <span>執勤班表雲端資料夾</span>
+              <span>現場執勤班表 (Google 雲端試算表)</span>
             </h2>
             <span className="text-[11px] px-2 py-0.5 rounded font-bold bg-indigo-500/20 text-indigo-300">
-              備用通道
+              即時同步通道
             </span>
           </div>
 
-          <div className="space-y-2 text-xs">
+          <form onSubmit={handleSyncSchedule} className="space-y-2.5 text-xs">
             <div>
               <label className="block font-bold mb-1 text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                雲端資料夾 / 試算表連結：
+                班表試算表連結（URL）：
               </label>
               <input
                 type="text"
-                value={scheduleFolderUrl}
-                onChange={(e) => setScheduleFolderUrl(e.target.value)}
-                placeholder="貼上公司 Google Drive 班表連結..."
+                value={scheduleUrl}
+                onChange={(e) => setScheduleUrl(e.target.value)}
+                placeholder="貼上 Google 試算表班表網址..."
                 className="w-full px-3 py-2 rounded-xl border font-mono text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 style={{ backgroundColor: 'var(--card-hover)', borderColor: 'var(--card-border)', color: 'var(--text)' }}
               />
             </div>
 
-            <div className="pt-1 flex justify-end">
+            <div className="flex items-center gap-2 pt-1">
               <button
-                onClick={() => {
-                  const newCfg = { ...cloudConfig, scheduleFolderUrl };
-                  setCloudConfig(newCfg);
-                  localStorage.setItem('tian_tai_cloud_config', JSON.stringify(newCfg));
-                  alert('設定已存。');
-                }}
-                className="w-full py-2 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white shadow-md flex items-center justify-center gap-1.5 transition-all"
+                type="submit"
+                disabled={isTestingSchedule}
+                className="flex-1 py-2 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
               >
-                <Save className="w-3.5 h-3.5" />
-                <span>存檔</span>
+                <RefreshCw className={`w-3.5 h-3.5 ${isTestingSchedule ? 'animate-spin' : ''}`} />
+                <span>{isTestingSchedule ? '同步班表中...' : '測試合驗並同步班表'}</span>
               </button>
+
+              <a
+                href={scheduleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 rounded-xl font-bold text-xs border hover:bg-slate-800/20 flex items-center gap-1 transition-all"
+                style={{ borderColor: 'var(--card-border)', color: 'var(--text)' }}
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                <span>開表</span>
+              </a>
             </div>
-          </div>
+          </form>
+
+          {/* 班表測試結果訊息 */}
+          {scheduleTestMessage && (
+            <div className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
+              scheduleTestMessage.type === 'success' 
+                ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-300' 
+                : 'bg-rose-500/10 border-rose-500/40 text-rose-300'
+            }`}>
+              {scheduleTestMessage.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+              )}
+              <div className="text-[11px]">{scheduleTestMessage.text}</div>
+            </div>
+          )}
         </div>
 
         {/* 極簡文言要義說明 */}

@@ -3,12 +3,12 @@ import * as XLSX from 'xlsx';
 /**
  * 將 Google Sheets 試算表分享網址轉化為直接可抓取之 CSV 串流網址
  */
-export function normalizeGoogleSheetUrl(rawUrl) {
+export function normalizeGoogleSheetUrl(rawUrl, useExport = true) {
   if (!rawUrl || typeof rawUrl !== 'string') return '';
   const trimmed = rawUrl.trim();
 
   // 若已經是 CSV 連結
-  if (trimmed.includes('out:csv')) {
+  if (trimmed.includes('out:csv') || trimmed.includes('format=csv')) {
     return trimmed;
   }
 
@@ -18,11 +18,11 @@ export function normalizeGoogleSheetUrl(rawUrl) {
 
   if (docMatch && docMatch[1]) {
     const docId = docMatch[1];
-    let csvUrl = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv`;
-    if (gidMatch && gidMatch[1]) {
-      csvUrl += `&gid=${gidMatch[1]}`;
+    const gid = gidMatch && gidMatch[1] ? gidMatch[1] : '0';
+    if (useExport) {
+      return `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=${gid}`;
     }
-    return csvUrl;
+    return `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&gid=${gid}`;
   }
 
   return trimmed;
@@ -107,4 +107,142 @@ export async function fetchCloudParkingData(url) {
   }
 
   return vehicles;
+}
+
+/**
+ * 遠端抓取並解析雲端 Google 試算表之執勤排班表
+ */
+export async function fetchCloudScheduleData(url, currentSchedule = null) {
+  if (!url) throw new Error('請提供有效的雲端執勤班表網址！');
+  const targetUrl = normalizeGoogleSheetUrl(url);
+
+  let response;
+  try {
+    response = await fetch(targetUrl);
+  } catch (err) {
+    const altUrl = normalizeGoogleSheetUrl(url, false);
+    response = await fetch(altUrl);
+  }
+
+  if (!response.ok) {
+    throw new Error(`無法連接雲端試算表 (HTTP ${response.status})，請確認試算表分享權限為「知道連結的任何人均可檢視」。`);
+  }
+
+  const csvText = await response.text();
+  const workbook = XLSX.read(csvText, { type: 'string' });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+  if (!aoa || aoa.length === 0) {
+    throw new Error('試算表內容為空！');
+  }
+
+  // 尋找包含「執勤人員」或「班別」的標題列
+  let headerRowIdx = -1;
+  for (let r = 0; r < Math.min(10, aoa.length); r++) {
+    const row = aoa[r] || [];
+    if (row.some(cell => String(cell || '').includes('執勤人員'))) {
+      headerRowIdx = r;
+      break;
+    }
+  }
+
+  if (headerRowIdx === -1) {
+    throw new Error('試算表中未找到包含「執勤人員」之表頭列！');
+  }
+
+  const headerRow = aoa[headerRowIdx];
+  // 找出日期 1..31 對應的欄位索引
+  const dayColMap = {};
+  headerRow.forEach((cell, c) => {
+    const n = parseInt(String(cell || '').trim(), 10);
+    if (!isNaN(n) && n >= 1 && n <= 31) {
+      dayColMap[n] = c;
+    }
+  });
+
+  const daysInMonth = Object.keys(dayColMap).length || 30;
+
+  // 預設應勤時數 (9/8 ~ 9/30 每日 12H)
+  const dailyTargetHours = {};
+  for (let d = 1; d <= daysInMonth; d++) {
+    dailyTargetHours[d] = d >= 8 ? 12 : 0;
+  }
+  let totalTargetHours = 276;
+
+  // 掃描「每日應勤時數」列
+  for (let r = headerRowIdx + 1; r < aoa.length; r++) {
+    const row = aoa[r] || [];
+    const firstCell = String(row[0] || '').trim();
+    if (firstCell.includes('應勤時數')) {
+      for (let d = 1; d <= daysInMonth; d++) {
+        const col = dayColMap[d];
+        const val = parseInt(String(row[col] || '0').trim(), 10);
+        if (!isNaN(val)) dailyTargetHours[d] = val;
+      }
+      const lastNums = row.map(c => parseInt(String(c || '').trim(), 10)).filter(n => !isNaN(n) && n > 50);
+      if (lastNums.length > 0) totalTargetHours = lastNums[lastNums.length - 1];
+      break;
+    }
+  }
+
+  // 讀取各保全人員列
+  const guards = [];
+  let r = headerRowIdx + 1;
+  if (aoa[r] && !aoa[r][0] && !aoa[r][1]) {
+    r++; // 跳過星期幾列
+  }
+
+  while (r < aoa.length) {
+    const row = aoa[r] || [];
+    const role = String(row[0] || '').trim();
+    const name = String(row[1] || '').trim();
+
+    if (role.includes('應勤時數') || name.includes('應勤時數') || role.includes('班次說明') || role.includes('注意事項')) {
+      break;
+    }
+
+    if (name) {
+      const shifts = {};
+      for (let d = 1; d <= daysInMonth; d++) {
+        const col = dayColMap[d];
+        const val = col !== undefined ? String(row[col] || '').trim() : '';
+        if (val) shifts[d] = val;
+      }
+
+      // 從數值欄位提取應勤與實勤
+      const nums = row.map(c => parseInt(String(c || '').trim(), 10)).filter(n => !isNaN(n) && n > 0);
+      const targetHours = nums.length >= 2 ? nums[nums.length - 2] : (Object.keys(shifts).length * 12);
+      const actualHours = nums.length >= 1 ? nums[nums.length - 1] : targetHours;
+
+      const existingGuard = currentSchedule?.guards?.find(g => g.name === name);
+
+      guards.push({
+        id: existingGuard?.id || `g_${guards.length + 1}`,
+        name,
+        role: role || '日班',
+        type: role.includes('機') ? 'backup' : 'regular',
+        phone: existingGuard?.phone || (name === '賴鯤仲' ? '0911-222-333' : (name === '葉榮東' ? '0922-333-444' : '0933-444-555')),
+        targetHours,
+        actualHours,
+        shifts,
+        specialNotes: existingGuard?.specialNotes || {}
+      });
+    }
+    r++;
+  }
+
+  return {
+    ...(currentSchedule || {}),
+    projectTitle: "天泰三總 現場執勤表",
+    companyName: "飛龍保全",
+    corpName: "中華飛龍物業",
+    yearRoc: 115,
+    yearAd: 2026,
+    month: 9,
+    daysInMonth,
+    dailyTargetHours,
+    totalTargetHours,
+    guards
+  };
 }
