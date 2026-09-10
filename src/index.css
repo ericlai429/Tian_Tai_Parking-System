@@ -164,6 +164,41 @@ body.light-mode .today-col-glow {
   border: 1px solid var(--card-border);
 }
 
+/* 男廁抽風扇防遺忘閃紅光呼吸效果 */
+@keyframes fan-alert-glow {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.6);
+    background-color: rgba(239, 68, 68, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(239, 68, 68, 0.9), inset 0 0 16px rgba(239, 68, 68, 0.35);
+    border-color: rgba(248, 113, 113, 1);
+    background-color: rgba(239, 68, 68, 0.28);
+  }
+}
+
+.fan-alert-box {
+  animation: fan-alert-glow 1.8s infinite ease-in-out !important;
+}
+
+body.light-mode .fan-alert-box {
+  animation: fan-alert-glow-light 1.8s infinite ease-in-out !important;
+}
+
+@keyframes fan-alert-glow-light {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.3), inset 0 0 6px rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.5);
+    background-color: rgba(254, 242, 242, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.7), inset 0 0 12px rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.95);
+    background-color: rgba(254, 226, 226, 0.95);
+  }
+}
+
 body.light-mode .glass-panel {
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid var(--border);

@@ -1,10 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Calendar, ClipboardList, Clock, ShieldCheck, CheckCircle2, AlertCircle, Download, MapPin, ZoomIn, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, ClipboardList, Clock, ShieldCheck, CheckCircle2, AlertCircle, Download, MapPin, ZoomIn, Check, ChevronLeft, ChevronRight, CheckSquare, Square } from 'lucide-react';
 
 export default function ScheduleView({ scheduleData, setScheduleData }) {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [fontSizeLevel, setFontSizeLevel] = useState(0); // 0: 標準, 1: 中, 2: 大 (放大三級)
   const longPressTimer = useRef(null);
+  
+  // 男廁抽風扇打鉤確認狀態 (依當日日期記憶儲存，隔日自動重置)
+  const [isFanClosed, setIsFanClosed] = useState(() => {
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const saved = localStorage.getItem('tian_tai_fan_closed_date');
+      return saved === todayStr;
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleFanClosed = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const next = !isFanClosed;
+    setIsFanClosed(next);
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      if (next) {
+        localStorage.setItem('tian_tai_fan_closed_date', todayStr);
+      } else {
+        localStorage.removeItem('tian_tai_fan_closed_date');
+      }
+    } catch {}
+  };
   
   // 橫向滾動與滑鼠拖曳 Ref
   const tableContainerRef = useRef(null);
@@ -511,9 +536,41 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                 <span className="text-rose-400 font-bold">•</span>
                 <span>巡檢 <strong>1~5 號門</strong>皆已全數妥善關閉。</span>
               </li>
-              <li className="flex items-start gap-1.5">
-                <span className="text-rose-400 font-bold">•</span>
-                <span>巡查並確認<strong>男廁抽風扇</strong>已關閉電源。</span>
+              {/* 男廁抽風扇 (防遺忘閃紅光呼吸效果 + 可打鉤確認提醒框) */}
+              <li 
+                onClick={handleToggleFanClosed}
+                className={`p-2 rounded-xl border transition-all cursor-pointer select-none flex items-start gap-2.5 my-1.5 shadow-sm ${
+                  isFanClosed
+                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'
+                    : 'fan-alert-box text-rose-100'
+                }`}
+                title={isFanClosed ? '點擊取消打鉤' : '點擊打鉤確認已關閉抽風扇電源'}
+              >
+                <div className="pt-0.5 shrink-0">
+                  {isFanClosed ? (
+                    <CheckSquare className="w-5 h-5 text-emerald-400 stroke-[2.5]" />
+                  ) : (
+                    <div className="w-5 h-5 rounded border-2 border-rose-400 bg-rose-500/25 flex items-center justify-center text-rose-200 hover:border-rose-200 transition-colors shadow-sm">
+                      {/* □ 空框 */}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                    <span className={`font-bold tracking-tight ${isFanClosed ? 'line-through opacity-75 text-slate-300' : 'text-white'}`}>
+                      巡查並確認 <strong className={isFanClosed ? 'text-emerald-300 no-underline font-black' : 'text-rose-300 underline underline-offset-4 decoration-rose-400 font-black'}>男廁抽風扇</strong> 已關閉電源。
+                    </span>
+                    {isFanClosed ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-extrabold bg-emerald-500/25 text-emerald-300 border border-emerald-500/40">
+                        <Check className="w-3 h-3 text-emerald-400" /> 已確認關閉
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-black bg-rose-600 text-white shadow-md shadow-rose-600/50 animate-pulse">
+                        ⚠️ 易遺忘！請打鉤
+                      </span>
+                    )}
+                  </div>
+                </div>
               </li>
               <li className="flex items-start gap-1.5">
                 <span className="text-rose-400 font-bold">•</span>
