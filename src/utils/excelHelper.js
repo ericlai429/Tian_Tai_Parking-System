@@ -97,7 +97,8 @@ export function exportParkingToExcel(parkingList, fileName = '天泰車輛名冊
 /**
  * 匯出班表為 Excel 格式
  */
-export function exportScheduleToExcel(scheduleData, fileName = '天泰現場執勤表_115年9月.xlsx') {
+export function exportScheduleToExcel(scheduleData, fileName = null) {
+  const actualFileName = fileName || `天泰現場執勤表_${scheduleData?.yearRoc || 115}年${scheduleData?.month || 10}月.xlsx`;
   const headers = ['班別', '執勤人員'];
   for (let d = 1; d <= scheduleData.daysInMonth; d++) {
     headers.push(`${d}日`);
@@ -116,5 +117,5 @@ export function exportScheduleToExcel(scheduleData, fileName = '天泰現場執�
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, `${scheduleData.yearRoc}.${scheduleData.month}班表`);
-  XLSX.writeFile(workbook, fileName);
+  XLSX.writeFile(workbook, actualFileName);
 }

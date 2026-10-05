@@ -83,11 +83,12 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
     tableContainerRef.current.scrollBy({ left: delta, behavior: 'smooth' });
   };
 
-  // 計算當前執勤日 (以 9 月為準，若為 9 月則以今日日期為主；若非 9 月則限制在全月天數範圍內)
+  // 計算當前執勤日 (動態以當前班表月份為準)
   const todayDate = new Date();
-  const todayDay = (todayDate.getMonth() + 1 === 9)
+  const targetMonth = scheduleData?.month || 10;
+  const todayDay = (todayDate.getMonth() + 1 === targetMonth)
     ? todayDate.getDate()
-    : Math.min(Math.max(todayDate.getDate(), 1), scheduleData?.daysInMonth || 30);
+    : Math.min(Math.max(todayDate.getDate(), 1), scheduleData?.daysInMonth || 31);
 
   // 畫面自動平移居中定位至當日
   const centerToday = (smooth = true) => {
@@ -193,7 +194,7 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                 現場執勤表
               </h2>
               <span className="text-[11px] px-2 py-0.5 rounded font-bold bg-indigo-500/20 text-indigo-300 whitespace-nowrap">
-                115年9月份
+                {scheduleData?.yearRoc || 115}年{scheduleData?.month || 10}月份
               </span>
             </div>
 
