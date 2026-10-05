@@ -3,16 +3,24 @@ import * as XLSX from 'xlsx';
 /**
  * 將 Google Sheets 試算表分享網址轉化為直接可抓取之 CSV 串流網址
  */
-export function normalizeGoogleSheetUrl(rawUrl, preferGviz = true) {
+export function normalizeGoogleSheetUrl(rawUrl, preferGviz = true, defaultSheetName = '14.天泰三總') {
   if (!rawUrl || typeof rawUrl !== 'string') return '';
   const trimmed = rawUrl.trim();
 
-  // 匹配 Google Spreadsheet ID 與 gid
+  // 匹配 Google Spreadsheet ID 與 gid 或 sheet 參數
   const docMatch = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
   const gidMatch = trimmed.match(/[#&?]gid=([0-9]+)/);
+  const sheetMatch = trimmed.match(/[#&?]sheet=([^&#]+)/);
 
   if (docMatch && docMatch[1]) {
     const docId = docMatch[1];
+    
+    // 若明確指定工作表名稱或帶有 sheet 參數
+    const targetSheet = sheetMatch ? decodeURIComponent(sheetMatch[1]) : (trimmed.includes('13UYtQujV1jVVYei2HkLSMAcAS1nZizeZ81RK1toUbmI') ? defaultSheetName : null);
+    if (targetSheet) {
+      return `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(targetSheet)}`;
+    }
+
     const gid = gidMatch && gidMatch[1] ? gidMatch[1] : '0';
     if (preferGviz) {
       return `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv&gid=${gid}`;
@@ -28,7 +36,7 @@ export function normalizeGoogleSheetUrl(rawUrl, preferGviz = true) {
  */
 export async function fetchCloudParkingData(url) {
   if (!url) throw new Error('請提供有效的雲端試算表網址！');
-  const targetUrl = normalizeGoogleSheetUrl(url, true);
+  const targetUrl = normalizeGoogleSheetUrl(url, true, null);
 
   let response;
   try {
@@ -36,7 +44,7 @@ export async function fetchCloudParkingData(url) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
   } catch (err) {
     try {
-      const altUrl = normalizeGoogleSheetUrl(url, false);
+      const altUrl = normalizeGoogleSheetUrl(url, false, null);
       response = await fetch(altUrl);
     } catch (e) {
       throw new Error(`無法連接雲端試算表 (${err.message || 'Load failed'})，請確認網路環境或試算表共用權限。`);
@@ -120,15 +128,14 @@ export async function fetchCloudParkingData(url) {
  * 遠端抓取並解析雲端 Google 試算表之執勤排班表
  */
 export async function fetchCloudScheduleData(url, currentSchedule = null) {
-  // 執勤班表因包含複雜合併儲存格，export 格式能精準保留原格式且支援 CORS
-  let targetUrl = normalizeGoogleSheetUrl(url, false);
+  let targetUrl = normalizeGoogleSheetUrl(url, true, '14.天泰三總');
 
   let response;
   try {
     response = await fetch(targetUrl);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
   } catch (err) {
-    const altUrl = normalizeGoogleSheetUrl(url, true);
+    const altUrl = normalizeGoogleSheetUrl(url, false, '14.天泰三總');
     response = await fetch(altUrl);
   }
 
@@ -145,7 +152,19 @@ export async function fetchCloudScheduleData(url, currentSchedule = null) {
     throw new Error('試算表內容為空！');
   }
 
-  // 尋找包含「執勤人員」或「班別」的標題列
+  // 1. 自動偵測月份與年份
+  const topText = (aoa[0] || []).map(c => String(c || '')).join(' ');
+  let yearRoc = 115;
+  let yearAd = 2026;
+  let month = 10;
+  const monthMatch = topText.match(/([0-9]{2,3})年([0-9]{1,2})月份?/);
+  if (monthMatch) {
+    yearRoc = parseInt(monthMatch[1], 10);
+    month = parseInt(monthMatch[2], 10);
+    yearAd = yearRoc + 1911;
+  }
+
+  // 2. 尋找包含「執勤人員」或「班別」的標題列
   let headerRowIdx = -1;
   for (let r = 0; r < Math.min(10, aoa.length); r++) {
     const row = aoa[r] || [];
@@ -169,14 +188,14 @@ export async function fetchCloudScheduleData(url, currentSchedule = null) {
     }
   });
 
-  const daysInMonth = Object.keys(dayColMap).length || 30;
+  const daysInMonth = Object.keys(dayColMap).length || new Date(yearAd, month, 0).getDate();
 
-  // 預設應勤時數 (9/8 ~ 9/30 每日 12H)
+  // 預設應勤時數 (全月每日 12H)
   const dailyTargetHours = {};
   for (let d = 1; d <= daysInMonth; d++) {
-    dailyTargetHours[d] = d >= 8 ? 12 : 0;
+    dailyTargetHours[d] = 12;
   }
-  let totalTargetHours = 276;
+  let totalTargetHours = daysInMonth * 12;
 
   // 掃描「每日應勤時數」列
   for (let r = headerRowIdx + 1; r < aoa.length; r++) {
@@ -204,18 +223,41 @@ export async function fetchCloudScheduleData(url, currentSchedule = null) {
   while (r < aoa.length) {
     const row = aoa[r] || [];
     const role = String(row[0] || '').trim();
-    const name = String(row[1] || '').trim();
+    const rawPerson = String(row[1] || '').trim();
 
-    if (role.includes('應勤時數') || name.includes('應勤時數') || role.includes('班次說明') || role.includes('注意事項')) {
+    if (role.includes('應勤時數') || rawPerson.includes('應勤時數') || role.includes('班次說明') || role.includes('注意事項')) {
       break;
     }
 
-    if (name) {
+    if (rawPerson) {
+      // 支援「姓名\n電話」拆解
+      const personParts = rawPerson.split('\n').map(s => s.trim()).filter(Boolean);
+      const name = personParts[0] || '';
+      const phoneInSheet = personParts[1] || '';
+
       const shifts = {};
+      const specialNotes = {};
+
       for (let d = 1; d <= daysInMonth; d++) {
         const col = dayColMap[d];
         const val = col !== undefined ? String(row[col] || '').trim() : '';
-        if (val) shifts[d] = val;
+        if (val === '休') {
+          specialNotes[d] = '指定休假';
+        } else if (val) {
+          shifts[d] = val;
+          if (role.includes('機')) {
+            specialNotes[d] = '日機代班';
+          }
+        }
+      }
+
+      // 若為日班常駐人員且未填滿所有天數，將非休假的天數自動補滿 A 班
+      if (role === '日班' && name.includes('賴鯤仲')) {
+        for (let d = 1; d <= daysInMonth; d++) {
+          if (!specialNotes[d] && !shifts[d]) {
+            shifts[d] = 'A';
+          }
+        }
       }
 
       // 從數值欄位提取應勤與實勤
@@ -223,18 +265,19 @@ export async function fetchCloudScheduleData(url, currentSchedule = null) {
       const targetHours = nums.length >= 2 ? nums[nums.length - 2] : (Object.keys(shifts).length * 12);
       const actualHours = nums.length >= 1 ? nums[nums.length - 1] : targetHours;
 
-      const existingGuard = currentSchedule?.guards?.find(g => g.name === name);
+      const displayName = (role === '日機' && name === '賴鯤仲') ? '賴鯤仲 (機動)' : name;
+      const existingGuard = currentSchedule?.guards?.find(g => g.name === displayName || g.name === name);
 
       guards.push({
         id: existingGuard?.id || `g_${guards.length + 1}`,
-        name,
+        name: displayName,
         role: role || '日班',
         type: role.includes('機') ? 'backup' : 'regular',
-        phone: existingGuard?.phone || (name === '賴鯤仲' ? '0911-222-333' : (name === '葉榮東' ? '0922-333-444' : '0933-444-555')),
+        phone: phoneInSheet || existingGuard?.phone || (name === '賴鯤仲' ? '0965-591-375' : (name === '馮俊愷' ? '0906-733-531' : '0928-882-119')),
         targetHours,
         actualHours,
         shifts,
-        specialNotes: existingGuard?.specialNotes || {}
+        specialNotes
       });
     }
     r++;
@@ -245,6 +288,7 @@ export async function fetchCloudScheduleData(url, currentSchedule = null) {
     phone: "02-2259-2999",
     fax: "02-2256-2609",
     headquarters: "220新北市板橋區文化路二段498號3樓",
+    siteAddress: "新北市三重區龍濱路206號",
     shiftTypes: {
       A: {
         name: "日班",
@@ -257,9 +301,9 @@ export async function fetchCloudScheduleData(url, currentSchedule = null) {
     projectTitle: "天泰三總 現場執勤表",
     companyName: "飛龍保全",
     corpName: "中華飛龍物業",
-    yearRoc: 115,
-    yearAd: 2026,
-    month: 9,
+    yearRoc,
+    yearAd,
+    month,
     daysInMonth,
     dailyTargetHours,
     totalTargetHours,

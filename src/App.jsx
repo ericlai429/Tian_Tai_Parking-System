@@ -9,6 +9,14 @@ import PassCardModal from './components/PassCardModal';
 import { INITIAL_SCHEDULE_DATA, DEFAULT_SCHEDULE_SHEET_URL } from './data/initialSchedule';
 import { INITIAL_PARKING_DATA, DEFAULT_PARKING_SHEET_URL } from './data/defaultParking';
 import { fetchCloudParkingData } from './utils/cloudSheetHelper';
+import { 
+  fetchSupabaseParkingData, 
+  fetchSupabaseScheduleData,
+  syncParkingDataToSupabase,
+  saveScheduleDataToSupabase,
+  subscribeToParkingChanges,
+  subscribeToScheduleChanges
+} from './utils/supabaseClient';
 import { Lock, Unlock, KeyRound, CreditCard } from 'lucide-react';
 
 export default function App() {
@@ -29,14 +37,14 @@ export default function App() {
   const [passCardPasswordInput, setPassCardPasswordInput] = useState('');
   const [passCardError, setPassCardError] = useState('');
 
-  // 勤務班表資料 (對齊 115年9月官方最新排班：賴鯤仲 144H / 葉榮東 96H / 賴宗興 36H)
+  // 勤務班表資料 (對齊 115年10月官方最新排班：賴鯤仲 240H / 馮俊愷 84H / 賴鯤仲(機動) 36H / 邱顯升 12H，全月 372H)
   const [scheduleData, setScheduleData] = useState(() => {
     const cached = localStorage.getItem('tian_tai_schedule_data');
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        // 若快取符合最新官方定案 (賴鯤仲 144 小時)，補齊可能缺漏的 dayNames 與 shiftTypes 並維持快取
-        if (parsed && Array.isArray(parsed.guards) && parsed.guards[0]?.targetHours === 144) {
+        // 若快取符合最新官方 10 月排班 (month === 10)
+        if (parsed && parsed.month === 10 && Array.isArray(parsed.guards) && parsed.guards.length > 0) {
           return {
             ...INITIAL_SCHEDULE_DATA,
             ...parsed,
@@ -114,14 +122,87 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  // 暫存資料至 LocalStorage
+  // 暫存資料至 LocalStorage 並同步至 Supabase 雲端資料庫
   useEffect(() => {
     localStorage.setItem('tian_tai_parking_data', JSON.stringify(parkingList));
+    syncParkingDataToSupabase(parkingList).catch(e => console.warn('[Supabase Sync]:', e.message));
   }, [parkingList]);
 
   useEffect(() => {
     localStorage.setItem('tian_tai_schedule_data', JSON.stringify(scheduleData));
+    saveScheduleDataToSupabase(scheduleData).catch(e => console.warn('[Supabase Sync]:', e.message));
   }, [scheduleData]);
+
+  // 初次載入與 Supabase 即時雙向同步 (Realtime)
+  useEffect(() => {
+    let isMounted = true;
+
+    // 1. 初次自 Supabase 雲端資料庫載入最新資料
+    async function loadFromSupabase() {
+      try {
+        const [cloudVehicles, cloudSched] = await Promise.all([
+          fetchSupabaseParkingData(),
+          fetchSupabaseScheduleData()
+        ]);
+
+        if (!isMounted) return;
+
+        if (Array.isArray(cloudVehicles) && cloudVehicles.length > 0) {
+          setParkingList(cloudVehicles);
+          localStorage.setItem('tian_tai_parking_data', JSON.stringify(cloudVehicles));
+        }
+
+        if (cloudSched && cloudSched.guards) {
+          setScheduleData(prev => ({
+            ...prev,
+            ...cloudSched
+          }));
+          localStorage.setItem('tian_tai_schedule_data', JSON.stringify(cloudSched));
+        }
+
+        setCloudStatus({
+          connected: true,
+          lastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+      } catch (err) {
+        console.warn('[Supabase] 載入雲端資料庫提示:', err.message);
+      }
+    }
+
+    loadFromSupabase();
+
+    // 2. 訂閱 Supabase Realtime 即時推播 (跨裝置多人同步)
+    const unsubParking = subscribeToParkingChanges((newVehicles) => {
+      if (!isMounted) return;
+      console.log('⚡ 接收到 Supabase 雲端車輛名冊即時更新');
+      setParkingList(newVehicles);
+      localStorage.setItem('tian_tai_parking_data', JSON.stringify(newVehicles));
+      setCloudStatus({
+        connected: true,
+        lastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    });
+
+    const unsubSchedule = subscribeToScheduleChanges((newSched) => {
+      if (!isMounted) return;
+      console.log('⚡ 接收到 Supabase 雲端班表即時更新');
+      setScheduleData(prev => ({
+        ...prev,
+        ...newSched
+      }));
+      localStorage.setItem('tian_tai_schedule_data', JSON.stringify(newSched));
+      setCloudStatus({
+        connected: true,
+        lastSync: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      if (unsubParking) unsubParking();
+      if (unsubSchedule) unsubSchedule();
+    };
+  }, []);
 
   // 背景自動偵測雲端試算表最新車輛名冊 (動態自動對齊雲端最新增加之車輛)
   useEffect(() => {

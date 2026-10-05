@@ -4,3 +4,5 @@ dist
 *.log
 ~$*
 雲端試算表副本/歷史備份/
+.env
+scripts/
