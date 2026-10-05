@@ -251,14 +251,6 @@ export async function fetchCloudScheduleData(url, currentSchedule = null) {
         }
       }
 
-      // 若為日班常駐人員且未填滿所有天數，將非休假的天數自動補滿 A 班
-      if (role === '日班' && name.includes('賴鯤仲')) {
-        for (let d = 1; d <= daysInMonth; d++) {
-          if (!specialNotes[d] && !shifts[d]) {
-            shifts[d] = 'A';
-          }
-        }
-      }
 
       // 從數值欄位提取應勤與實勤
       const nums = row.map(c => parseInt(String(c || '').trim(), 10)).filter(n => !isNaN(n) && n > 0);
