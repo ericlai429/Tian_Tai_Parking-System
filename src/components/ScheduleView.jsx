@@ -366,11 +366,10 @@ export default function ScheduleView({ scheduleData, setScheduleData }) {
                     {guard.name}
                   </td>
 
-                  {/* 每日班別格子 */}
                   {Array.from({ length: scheduleData?.daysInMonth || 30 }, (_, i) => i + 1).map(d => {
                     const shifts = guard.shifts || {};
                     const shift = shifts[d] || '';
-                    const isSpecialPink = (guard.id === 'g3' && d === 11) || (guard.specialNotes && guard.specialNotes[d]?.type === 'substitute');
+                    const isSpecialPink = Boolean(guard.specialNotes && guard.specialNotes[d]?.type === 'substitute');
                     const weekend = isWeekendDay(d);
                     const isToday = d === todayDay;
 
